@@ -9,8 +9,8 @@
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.7/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary: #28a745; /* Verde para maquinaria */
-            --secondary: #ffc107; /* Amarillo para tractores */
+            --primary: #28a745;
+            --secondary: #ffc107;
             --light: #f8f9fa;
             --dark: #343a40;
             --gradient: linear-gradient(90deg, #28a745 0%, #00c6ff 100%);
@@ -266,19 +266,35 @@
                             <label class="form-label">Especialidades</label>
                             <div class="d-flex flex-wrap">
                                 <div class="form-check specialty-checkbox me-3">
-                                    <input type="checkbox" class="form-check-input" id="spec-maquinaria" value="Maquinaria">
+                                    <input type="checkbox" class="form-check-input" name="specialties" id="spec-maquinaria" value="Maquinaria">
                                     <label class="form-check-label" for="spec-maquinaria">Maquinaria</label>
                                 </div>
                                 <div class="form-check specialty-checkbox me-3">
-                                    <input type="checkbox" class="form-check-input" id="spec-tractores" value="Tractores">
+                                    <input type="checkbox" class="form-check-input" name="specialties" id="spec-tractores" value="Tractores">
                                     <label class="form-check-label" for="spec-tractores">Tractores</label>
                                 </div>
                                 <div class="form-check specialty-checkbox me-3">
-                                    <input type="checkbox" class="form-check-input" id="spec-agricultura" value="Agricultura">
+                                    <input type="checkbox" class="form-check-input" name="specialties" id="spec-agricultura" value="Agricultura">
                                     <label class="form-check-label" for="spec-agricultura">Agricultura</label>
                                 </div>
+                                <div class="form-check specialty-checkbox me-3">
+                                    <input type="checkbox" class="form-check-input" name="specialties" id="spec-proyectosEspeciales" value="Proyectos Especiales">
+                                    <label class="form-check-label" for="spec-proyectosEspeciales">Proyectos Especiales</label>
+                                </div>
+                                <div class="form-check specialty-checkbox me-3">
+                                    <input type="checkbox" class="form-check-input" name="specialties" id="spec-ServicioAlCliente" value="Servicio al Cliente">
+                                    <label class="form-check-label" for="spec-ServicioAlCliente">Servicio al Cliente</label>
+                                </div>
+                                <div class="form-check specialty-checkbox me-3">
+                                    <input type="checkbox" class="form-check-input" name="specialties" id="spec-administracion" value="Administracion">
+                                    <label class="form-check-label" for="spec-administracion">Administracion</label>
+                                </div>
+                                <div class="form-check specialty-checkbox me-3">
+                                    <input type="checkbox" class="form-check-input" name="specialties" id="spec-ventas" value="Ventas">
+                                    <label class="form-check-label" for="spec-ventas">Ventas</label>
+                                </div>
                                 <div class="form-check specialty-checkbox">
-                                    <input type="checkbox" class="form-check-input" id="spec-otros" value="Otros">
+                                    <input type="checkbox" class="form-check-input" name="specialties" id="spec-otros" value="Otros">
                                     <label class="form-check-label" for="spec-otros">Otros</label>
                                 </div>
                             </div>
@@ -416,7 +432,13 @@
             data.forEach(advisor => {
                 let specialties = Array.isArray(advisor.specialties) ? advisor.specialties : [];
                 if (typeof advisor.specialties === 'string') {
-                    try { specialties = JSON.parse(advisor.specialties); } catch (e) { console.error('Error parsing specialties:', e); specialties = []; }
+                    try {
+                        specialties = JSON.parse(advisor.specialties);
+                        if (!Array.isArray(specialties)) specialties = []; // Asegurar que sea un arreglo
+                    } catch (e) {
+                        console.error('Error parsing specialties:', e, 'Raw data:', advisor.specialties);
+                        specialties = [];
+                    }
                 }
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -428,8 +450,8 @@
                         </a>
                     </td>
                     <td>
-                        ${specialties.length 
-                            ? specialties.map(s => `<span class="badge bg-primary me-1">${s}</span>`).join('') 
+                        ${specialties.length > 0
+                            ? specialties.map(s => `<span class="badge bg-primary me-1">${s}</span>`).join('')
                             : '<span class="text-muted">-</span>'}
                     </td>
                     <td>
@@ -464,7 +486,13 @@
                         document.getElementById('advisor-whatsapp').value = data.whatsapp || '';
                         let specialties = Array.isArray(data.specialties) ? data.specialties : [];
                         if (typeof data.specialties === 'string') {
-                            try { specialties = JSON.parse(data.specialties); } catch (e) { console.error('Error parsing specialties:', e); specialties = []; }
+                            try {
+                                specialties = JSON.parse(data.specialties);
+                                if (!Array.isArray(specialties)) specialties = [];
+                            } catch (e) {
+                                console.error('Error parsing specialties:', e, 'Raw data:', data.specialties);
+                                specialties = [];
+                            }
                         }
                         document.querySelectorAll('input[name="specialties"]').forEach(checkbox => {
                             checkbox.checked = specialties.includes(checkbox.value);
@@ -478,68 +506,67 @@
             modal.show();
         }
 
-       async function saveAdvisor() {
-    const id = document.getElementById('advisor-id').value;
-    const name = document.getElementById('advisor-name').value;
-    const position = document.getElementById('advisor-position').value;
-    const whatsapp = document.getElementById('advisor-whatsapp').value;
-    const specialties = Array.from(document.querySelectorAll('input[name="specialties"]:checked')).map(cb => cb.value);
-    let image_url = '';
+        async function saveAdvisor() {
+            const id = document.getElementById('advisor-id').value;
+            const name = document.getElementById('advisor-name').value;
+            const position = document.getElementById('advisor-position').value;
+            const whatsapp = document.getElementById('advisor-whatsapp').value;
+            const specialties = Array.from(document.querySelectorAll('input[name="specialties"]:checked')).map(cb => cb.value);
+            let image_url = '';
 
-    if (document.getElementById('advisor-image-upload').files.length > 0) {
-        const file = document.getElementById('advisor-image-upload').files[0];
-        const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; // Limpia el nombre del archivo
-        const { error: uploadError, data } = await supabase.storage
-            .from('images')
-            .upload(fileName, file, { upsert: true });
-        if (uploadError) {
-            console.error('Error uploading image:', uploadError.message, uploadError);
-            Swal.fire('Error', `No se pudo subir la imagen: ${uploadError.message}. Verifica los permisos de RLS en Supabase Storage.`, 'error');
-            return;
-        }
-        image_url = `${supabaseUrl}/storage/v1/object/public/images/${fileName}`;
-    } else if (id) {
-        // Mantener la imagen existente si no se sube una nueva
-        const { data: existingData } = await supabase.from('advisors').select('image_url').eq('id', id).single();
-        image_url = existingData?.image_url || '';
-    } else {
-        image_url = 'https://via.placeholder.com/40'; // Placeholder para nuevos asesores sin imagen
-    }
+            if (document.getElementById('advisor-image-upload').files.length > 0) {
+                const file = document.getElementById('advisor-image-upload').files[0];
+                const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                const { error: uploadError, data } = await supabase.storage
+                    .from('images')
+                    .upload(fileName, file, { upsert: true });
+                if (uploadError) {
+                    console.error('Error uploading image:', uploadError.message, uploadError);
+                    Swal.fire('Error', `No se pudo subir la imagen: ${uploadError.message}. Verifica los permisos de RLS en Supabase Storage.`, 'error');
+                    return;
+                }
+                image_url = `${supabaseUrl}/storage/v1/object/public/images/${fileName}`;
+            } else if (id) {
+                const { data: existingData } = await supabase.from('advisors').select('image_url').eq('id', id).single();
+                image_url = existingData?.image_url || '';
+            } else {
+                image_url = 'https://via.placeholder.com/40';
+            }
 
-    const advisor = {
-        name,
-        position,
-        whatsapp,
-        specialties: JSON.stringify(specialties),
-        image_url,
-        deleted: false
-    };
-    let result;
-    try {
-        if (id) {
-            result = await supabase
-                .from('advisors')
-                .update(advisor)
-                .eq('id', id)
-                .eq('deleted', false);
-        } else {
-            result = await supabase
-                .from('advisors')
-                .insert(advisor);
+            const advisor = {
+                name,
+                position,
+                whatsapp,
+                specialties: JSON.stringify(specialties),
+                image_url,
+                deleted: false
+            };
+            let result;
+            try {
+                if (id) {
+                    result = await supabase
+                        .from('advisors')
+                        .update(advisor)
+                        .eq('id', id)
+                        .eq('deleted', false);
+                } else {
+                    result = await supabase
+                        .from('advisors')
+                        .insert(advisor);
+                }
+                if (result.error) {
+                    console.error('Error saving advisor:', result.error);
+                    Swal.fire('Error', 'No se pudo guardar el asesor', 'error');
+                } else {
+                    Swal.fire('Guardado', 'El asesor ha sido guardado correctamente', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('advisorModal')).hide();
+                    await loadAdvisors();
+                }
+            } catch (err) {
+                console.error('Excepción al guardar asesor:', err);
+                Swal.fire('Error', 'Ocurrió un error al guardar el asesor', 'error');
+            }
         }
-        if (result.error) {
-            console.error('Error saving advisor:', result.error);
-            Swal.fire('Error', 'No se pudo guardar el asesor', 'error');
-        } else {
-            Swal.fire('Guardado', 'El asesor ha sido guardado correctamente', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('advisorModal')).hide();
-            await loadAdvisors();
-        }
-    } catch (err) {
-        console.error('Excepción al guardar asesor:', err);
-        Swal.fire('Error', 'Ocurrió un error al guardar el asesor', 'error');
-    }
-}
 
         async function editAdvisor(id) {
             openAdvisorModal('edit', id);

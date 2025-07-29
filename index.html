@@ -1,103 +1,322 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inicio de Sesión - Iqueño SAC</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            background: linear-gradient(135deg, #f0f4f8, #d9e4f5);
-            font-family: 'Segoe UI', Arial, sans-serif;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .login-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-        .login-container h2 {
-            color: #28a745; /* Verde para maquinaria */
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-        .form-control:focus {
-            border-color: #28a745;
-            box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
-        }
-        .btn-login {
-            background: #28a745; /* Verde para maquinaria */
-            border: none;
-            width: 100%;
-            padding: 0.75rem;
-            font-weight: 500;
-        }
-        .btn-login:hover {
-            background: #218838; /* Tono más oscuro de verde */
-        }
-        .alert {
-            margin-top: 1rem;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inicio de Sesión - Iqueño SAC</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    :root {
+      --green-tractor: #28a745;
+      --yellow-tractor: #ffc107;
+      --light-green: #e6f4ea;
+      --light-yellow: #fff9e6;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+      overflow: hidden;
+      display: flex;
+      background: linear-gradient(135deg, var(--green-tractor), var(--yellow-tractor));
+    }
+
+    .login-wrapper {
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+
+    .image-section {
+      width: 50%;
+      height: 100%;
+      background: url('assets/portada1.jpg') no-repeat center center;
+      background-size: cover;
+      position: relative;
+      transition: transform 0.5s ease;
+    }
+
+    .image-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, rgba(40, 167, 69, 0.7), rgba(255, 193, 7, 0.7));
+      z-index: 1;
+    }
+
+    .image-section:hover {
+      transform: scale(1.02);
+    }
+
+    .login-container {
+      width: 50%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 2rem 3rem;
+      position: relative;
+      overflow: hidden;
+      animation: slideIn 0.8s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .logo {
+      width: 380px;
+      height: auto;
+      margin-bottom: 2.5rem;
+      transition: transform 0.4s ease;
+    }
+
+    .logo:hover {
+      transform: rotate(10deg) scale(1.1);
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+
+    .form-label {
+      color: var(--green-tractor);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .form-control {
+      border-radius: 12px;
+      border: 2px solid var(--light-green);
+      padding: 0.9rem;
+      font-size: 1.1rem;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .form-control:focus {
+      border-color: var(--yellow-tractor);
+      box-shadow: 0 0 15px rgba(255, 193, 7, 0.6);
+      outline: none;
+    }
+
+    .form-control:invalid {
+      border-color: #dc3545;
+    }
+
+    .form-control:valid {
+      border-color: var(--green-tractor);
+    }
+
+    .btn-login {
+      background: linear-gradient(90deg, var(--green-tractor), var(--yellow-tractor));
+      border: none;
+      width: 100%;
+      padding: 1rem;
+      font-weight: 700;
+      color: white;
+      border-radius: 12px;
+      margin-top: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.4s ease, background 0.4s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-login:hover {
+      transform: scale(1.05);
+      background: linear-gradient(90deg, #218838, #e0a800);
+    }
+
+    .btn-login::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background: rgba(255, 255, 255, 0.3);
+      transition: width 0.4s ease;
+    }
+
+    .btn-login:hover::after {
+      width: 100%;
+    }
+
+    .btn-login .spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #fff;
+      border-top: 3px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
+
+    .btn-login.loading .spinner {
+      display: inline-block;
+    }
+
+    .btn-login.loading span {
+      opacity: 0.7;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .tractor-animation {
+      position: absolute;
+      top: 50%;
+      left: -100px;
+      font-size: 3rem;
+      color: var(--yellow-tractor);
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      animation: moveTractor 2.5s linear forwards;
+      display: none;
+      z-index: 10;
+    }
+
+    @keyframes moveTractor {
+      0% { left: -100px; }
+      100% { left: 100%; }
+    }
+
+    @media (max-width: 768px) {
+      .login-wrapper {
+        flex-direction: column;
+      }
+      .image-section, .login-container {
+        width: 100%;
+        height: 50%;
+      }
+      .login-container {
+        padding: 1.5rem 2rem;
+        animation: none;
+      }
+      .logo {
+        width: 120px;
+        margin-bottom: 1.5rem;
+      }
+      .form-control {
+        padding: 0.7rem;
+        font-size: 1rem;
+      }
+      .btn-login {
+        padding: 0.9rem;
+      }
+    }
+  </style>
 </head>
 <body>
+  <div class="login-wrapper">
+    <div class="image-section"></div>
     <div class="login-container">
-        <h2><i class="fas fa-leaf"></i> Iqueño SAC - Login</h2>
+      <div class="login-box">
+        <img src="assets/logo.png" alt="Logo Iqueño SAC" class="logo" />
         <form id="loginForm">
-            <div class="mb-3">
-                <label for="email" class="form-label">Correo Electrónico</label>
-                <input type="email" class="form-control" id="email" placeholder="tu@email.com" required>
-            </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Contraseña</label>
-                <input type="password" class="form-control" id="password" placeholder="••••••••" required>
-            </div>
-            <button type="submit" class="btn btn-login">Iniciar Sesión</button>
+          <div class="form-group">
+            <label for="email" class="form-label">Correo Electrónico</label>
+            <input type="email" class="form-control" id="email" placeholder="tu@email.com" required />
+          </div>
+          <div class="form-group">
+            <label for="password" class="form-label">Contraseña</label>
+            <input type="password" class="form-control" id="password" placeholder="••••••••" required />
+          </div>
+          <button type="submit" class="btn-login">
+            <span class="spinner"></span>
+            <span id="btn-text">Iniciar Sesión</span>
+          </button>
         </form>
-        <div id="alertContainer"></div>
+        <div class="tractor-animation"><i class="fas fa-tractor"></i></div>
+      </div>
     </div>
+  </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const { createClient } = window.supabase;
-        const supabaseUrl = 'https://rqouqtdgxsksueyskdow.supabase.co';
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxb3VxdGRneHNrc3VleXNrZG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjgxNTcsImV4cCI6MjA2OTIwNDE1N30.7s3i-7gJw-MiI0473eR_3gVX5TrskpJ1ivZKglfeMk0';
-        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const { createClient } = window.supabase;
+    const supabase = createClient(
+      'https://rqouqtdgxsksueyskdow.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxb3VxdGRneHNrc3VleXNrZG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjgxNTcsImV4cCI6MjA2OTIwNDE1N30.7s3i-7gJw-MiI0473eR_3gVX5TrskpJ1ivZKglfeMk0'
+    );
 
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+    const loginForm = document.getElementById('loginForm');
+    const btnText = document.getElementById('btn-text');
+    const btnLogin = document.querySelector('.btn-login');
+    const tractorAnimation = document.querySelector('.tractor-animation');
 
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email: email,
-                password: password
-            });
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
 
-            if (error) {
-                document.getElementById('alertContainer').innerHTML = `
-                    <div class="alert alert-danger" role="alert">
-                        Error: ${error.message}
-                    </div>
-                `;
-            } else {
-                document.getElementById('alertContainer').innerHTML = `
-                    <div class="alert alert-success" role="alert">
-                        Inicio de sesión exitoso. Redirigiendo...
-                    </div>
-                `;
-                setTimeout(() => {
-                    window.location.href = 'panel.html';
-                }, 1000); // Redirige después de 1 segundo
-            }
+      // Validación básica en tiempo real
+      if (!email || !password) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Campos incompletos',
+          text: 'Por favor, completa todos los campos.',
+
         });
-    </script>
+        return;
+      }
+
+      // Mostrar animación y bloquear botón
+      btnLogin.classList.add('loading');
+      tractorAnimation.style.display = 'block';
+      loginForm.style.pointerEvents = 'none';
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        btnLogin.classList.remove('loading');
+        tractorAnimation.style.display = 'none';
+        btnText.textContent = 'Iniciar Sesión';
+        loginForm.style.pointerEvents = 'auto';
+        Swal.fire({
+          icon: 'error',
+          title: 'Error de inicio de sesión',
+          text: error.message,
+
+        });
+      } else {
+        Swal.fire({
+          icon: 'success',
+          title: '¡Bienvenido a Iqueño SAC!',
+          text: 'Inicio de sesión exitoso. Redirigiendo al panel...',
+          showConfirmButton: false,
+          timer: 1500,
+
+        });
+        setTimeout(() => {
+          window.location.href = 'panel.html';
+        }, 1600);
+      }
+    });
+  </script>
 </body>
 </html>
