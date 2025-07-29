@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de Sesión - Iqueño SAC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f0f4f8, #d9e4f5);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-container h2 {
+            color: #28a745; /* Verde para maquinaria */
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .form-control:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+        }
+        .btn-login {
+            background: #28a745; /* Verde para maquinaria */
+            border: none;
+            width: 100%;
+            padding: 0.75rem;
+            font-weight: 500;
+        }
+        .btn-login:hover {
+            background: #218838; /* Tono más oscuro de verde */
+        }
+        .alert {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2><i class="fas fa-leaf"></i> Iqueño SAC - Login</h2>
+        <form id="loginForm">
+            <div class="mb-3">
+                <label for="email" class="form-label">Correo Electrónico</label>
+                <input type="email" class="form-control" id="email" placeholder="tu@email.com" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn btn-login">Iniciar Sesión</button>
+        </form>
+        <div id="alertContainer"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const { createClient } = window.supabase;
+        const supabaseUrl = 'https://rqouqtdgxsksueyskdow.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxb3VxdGRneHNrc3VleXNrZG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjgxNTcsImV4cCI6MjA2OTIwNDE1N30.7s3i-7gJw-MiI0473eR_3gVX5TrskpJ1ivZKglfeMk0';
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (error) {
+                document.getElementById('alertContainer').innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        Error: ${error.message}
+                    </div>
+                `;
+            } else {
+                document.getElementById('alertContainer').innerHTML = `
+                    <div class="alert alert-success" role="alert">
+                        Inicio de sesión exitoso. Redirigiendo...
+                    </div>
+                `;
+                setTimeout(() => {
+                    window.location.href = 'panel.html';
+                }, 1000); // Redirige después de 1 segundo
+            }
+        });
+    </script>
+</body>
+</html>

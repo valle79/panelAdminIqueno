@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo - Iqueño SAC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.7/dist/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #28a745; /* Verde para maquinaria */
+            --secondary: #ffc107; /* Amarillo para tractores */
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --gradient: linear-gradient(90deg, #28a745 0%, #00c6ff 100%);
+        }
+        body {
+            background: var(--light);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow-x: hidden;
+        }
+        #sidebar-wrapper {
+            width: 260px;
+            background: var(--primary);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            padding: 2rem 0 1rem 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.07);
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+        #sidebar-wrapper .nav-link {
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            border-radius: 0 30px 30px 0;
+            margin-bottom: 0.5rem;
+            transition: background 0.2s, color 0.2s;
+        }
+        #sidebar-wrapper .nav-link.active, #sidebar-wrapper .nav-link:hover {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+        }
+        #sidebar-wrapper .sidebar-title {
+            font-size: 1.7rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 2rem;
+            color: white;
+            text-align: center;
+        }
+        #page-content-wrapper {
+            margin-left: 260px;
+            padding: 2rem 2vw;
+            min-height: 100vh;
+            transition: margin-left 0.3s;
+        }
+        .navbar {
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+            background: var(--gradient);
+            color: white;
+        }
+        .navbar .navbar-text {
+            color: #fff;
+            font-weight: 500;
+        }
+        .section-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+        #advisors .card {
+            border-left: 5px solid var(--primary);
+        }
+        #gallery .card {
+            border-left: 5px solid var(--secondary);
+        }
+        .card {
+            border: none;
+            border-radius: 18px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .table th, .table td {
+            vertical-align: middle;
+        }
+        .btn-primary {
+            background: var(--gradient);
+            border: none;
+            transition: background 0.2s;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #218838 0%, #00b4e6 100%);
+        }
+        .btn-info {
+            background: #17a2b8;
+            border: none;
+        }
+        .btn-danger {
+            background: #dc3545;
+            border: none;
+        }
+        .modal-header {
+            background: var(--gradient);
+            color: white;
+            border-radius: 18px 18px 0 0;
+        }
+        .modal-footer {
+            border-top: none;
+        }
+        .form-label {
+            font-weight: 500;
+            color: var(--dark);
+        }
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+        }
+        .custom-file-input {
+            border: 2px dashed var(--primary);
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 10px;
+            background: #fff;
+            transition: all 0.2s;
+        }
+        .custom-file-input:hover {
+            background: #f1f9f4;
+        }
+        .specialty-checkbox {
+            margin-right: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        @media (max-width: 900px) {
+            #sidebar-wrapper {
+                width: 100vw;
+                height: auto;
+                position: static;
+                box-shadow: none;
+                padding: 1rem 0;
+            }
+            #page-content-wrapper {
+                margin-left: 0;
+                padding: 1rem 2vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="d-flex" id="wrapper">
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <div class="sidebar-title">
+                <i class="fa-solid fa-leaf me-2"></i> Iqueño SAC
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#advisors"><i class="fas fa-users me-2"></i> Asesores</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#gallery"><i class="fas fa-image me-2"></i> Galería</a>
+                </li>
+                <li class="nav-item mt-4">
+                    <a class="nav-link" href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión</a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <nav class="navbar navbar-expand-lg mb-4 px-3">
+                <div class="container-fluid">
+                    <span class="navbar-text ms-auto">Bienvenido, <span id="user-name"></span></span>
+                </div>
+            </nav>
+
+            <!-- Advisors Section -->
+            <section id="advisors">
+                <div class="section-title"><i class="fas fa-users me-2"></i> Gestión de Asesores</div>
+                <div class="card p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="fa-solid fa-user-tie me-2"></i> Lista de Asesores</h5>
+                        <button class="btn btn-primary" onclick="openAdvisorModal('add')"><i class="fa fa-plus me-1"></i> Agregar Asesor</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Cargo</th>
+                                    <th>WhatsApp</th>
+                                    <th>Especialidades</th>
+                                    <th>Imagen</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="advisors-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gallery Section -->
+            <section id="gallery">
+                <div class="section-title"><i class="fas fa-image me-2"></i> Gestión de Galería</div>
+                <div class="card p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="fa-solid fa-boxes-stacked me-2"></i> Lista de Productos</h5>
+                        <button class="btn btn-primary" onclick="openGalleryModal('add')"><i class="fa fa-plus me-1"></i> Agregar Producto</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Descripción</th>
+                                    <th>Especificaciones</th>
+                                    <th>Características</th>
+                                    <th>Dimensiones</th>
+                                    <th>Imagen</th>
+                                    <th>PDF</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gallery-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Advisor Modal -->
+    <div class="modal fade" id="advisorModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="advisorModalLabel">Agregar/Editar Asesor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="advisor-id">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="advisor-name" placeholder="Ej. Juan Pérez" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Cargo</label>
+                            <input type="text" class="form-control" id="advisor-position" placeholder="Ej. Técnico Agrícola" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">WhatsApp</label>
+                            <input type="text" class="form-control" id="advisor-whatsapp" placeholder="Ej. 987654321" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Especialidades</label>
+                            <div class="d-flex flex-wrap">
+                                <div class="form-check specialty-checkbox me-3">
+                                    <input type="checkbox" class="form-check-input" id="spec-maquinaria" value="Maquinaria">
+                                    <label class="form-check-label" for="spec-maquinaria">Maquinaria</label>
+                                </div>
+                                <div class="form-check specialty-checkbox me-3">
+                                    <input type="checkbox" class="form-check-input" id="spec-tractores" value="Tractores">
+                                    <label class="form-check-label" for="spec-tractores">Tractores</label>
+                                </div>
+                                <div class="form-check specialty-checkbox me-3">
+                                    <input type="checkbox" class="form-check-input" id="spec-agricultura" value="Agricultura">
+                                    <label class="form-check-label" for="spec-agricultura">Agricultura</label>
+                                </div>
+                                <div class="form-check specialty-checkbox">
+                                    <input type="checkbox" class="form-check-input" id="spec-otros" value="Otros">
+                                    <label class="form-check-label" for="spec-otros">Otros</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Imagen</label>
+                            <div class="custom-file-input" onclick="document.getElementById('advisor-image-upload').click()">
+                                <i class="fas fa-upload fa-2x"></i><br>
+                                Haz clic aquí para subir una imagen
+                            </div>
+                            <input type="file" class="d-none" id="advisor-image-upload" accept="image/*">
+                            <small id="advisor-image-preview" class="mt-2 d-block"></small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveAdvisor()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gallery Modal -->
+    <div class="modal fade" id="galleryModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="galleryModalLabel">Agregar/Editar Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="product-id">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="product-name" placeholder="Ej. Cultivadora" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Descripción</label>
+                            <input type="text" class="form-control" id="product-description" placeholder="Ej. Máquina para cultivo">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Especificaciones</label>
+                            <input type="text" class="form-control" id="product-spec" placeholder="Ej. Potencia: 100HP">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Características</label>
+                            <input type="text" class="form-control" id="product-feature" placeholder="Ej. Duradera">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Dimensiones</label>
+                            <input type="text" class="form-control" id="product-dimension" placeholder="Ej. 200x150x100 cm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">URL de PDF</label>
+                            <input type="text" class="form-control" id="product-pdf" placeholder="Ej. https://ejemplo.com/pdf">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Imagen</label>
+                            <div class="custom-file-input" onclick="document.getElementById('product-image-upload').click()">
+                                <i class="fas fa-upload fa-2x"></i><br>
+                                Haz clic aquí para subir una imagen
+                            </div>
+                            <input type="file" class="d-none" id="product-image-upload" accept="image/*">
+                            <small id="product-image-preview" class="mt-2 d-block"></small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveProduct()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Inicialización del cliente Supabase al inicio del script
+        const { createClient } = window.supabase;
+        const supabaseUrl = 'https://rqouqtdgxsksueyskdow.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxb3VxdGRneHNrc3VleXNrZG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjgxNTcsImV4cCI6MjA2OTIwNDE1N30.7s3i-7gJw-MiI0473eR_3gVX5TrskpJ1ivZKglfeMk0';
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+        let currentUser = null;
+
+        // Verificar autenticación al cargar la página
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const { data: { user }, error } = await supabase.auth.getUser();
+                if (error || !user) {
+                    console.error('No autenticado:', error);
+                    window.location.href = './index.html';
+                } else {
+                    currentUser = user;
+                    document.getElementById('user-name').textContent = user.email || 'Usuario';
+                    await loadAdvisors();
+                    await loadProducts();
+                }
+            } catch (err) {
+                console.error('Error al verificar usuario:', err);
+                window.location.href = './index.html';
+            }
+        });
+
+        // Logout
+        async function logout() {
+            try {
+                await supabase.auth.signOut();
+                window.location.href = './index.html';
+            } catch (err) {
+                console.error('Error al cerrar sesión:', err);
+                Swal.fire('Error', 'No se pudo cerrar sesión', 'error');
+            }
+        }
+
+        // Advisors CRUD
+        async function loadAdvisors() {
+            const { data, error } = await supabase
+                .from('advisors')
+                .select('id, name, position, whatsapp, specialties, image_url, deleted, created_at')
+                .eq('deleted', false)
+                .order('id', { ascending: true });
+            console.log('Datos de advisors:', data);
+            if (error) {
+                console.error('Error al cargar asesores:', error);
+                Swal.fire('Error', 'No se pudo cargar asesores', 'error');
+                return;
+            }
+            const table = document.getElementById('advisors-table');
+            table.innerHTML = '';
+            data.forEach(advisor => {
+                let specialties = Array.isArray(advisor.specialties) ? advisor.specialties : [];
+                if (typeof advisor.specialties === 'string') {
+                    try { specialties = JSON.parse(advisor.specialties); } catch (e) { console.error('Error parsing specialties:', e); specialties = []; }
+                }
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${advisor.name || '-'}</td>
+                    <td>${advisor.position || '-'}</td>
+                    <td>
+                        <a href="https://wa.me/51${advisor.whatsapp || ''}" target="_blank" class="btn btn-success btn-sm">
+                            <i class="fab fa-whatsapp"></i> ${advisor.whatsapp || '-'}
+                        </a>
+                    </td>
+                    <td>
+                        ${specialties.length 
+                            ? specialties.map(s => `<span class="badge bg-primary me-1">${s}</span>`).join('') 
+                            : '<span class="text-muted">-</span>'}
+                    </td>
+                    <td>
+                        <img src="${advisor.image_url || 'https://via.placeholder.com/40'}" alt="img" style="width:40px;height:40px;object-fit:cover;border-radius:50%;">
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-info me-2" onclick="editAdvisor(${advisor.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteAdvisor(${advisor.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        }
+
+        function openAdvisorModal(action, id = null) {
+            const modal = new bootstrap.Modal(document.getElementById('advisorModal'));
+            document.getElementById('advisor-id').value = id || '';
+            document.getElementById('advisor-name').value = '';
+            document.getElementById('advisor-position').value = '';
+            document.getElementById('advisor-whatsapp').value = '';
+            document.querySelectorAll('input[name="specialties"]').forEach(checkbox => checkbox.checked = false);
+            document.getElementById('advisor-image-preview').textContent = '';
+            document.getElementById('advisor-image-upload').value = '';
+            document.getElementById('advisorModalLabel').textContent = id ? 'Editar Asesor' : 'Agregar Asesor';
+            if (id) {
+                supabase.from('advisors').select('id, name, position, whatsapp, specialties, image_url, deleted').eq('id', id).eq('deleted', false).single().then(({ data, error }) => {
+                    if (error) {
+                        console.error('Error fetching advisor:', error);
+                    } else if (data) {
+                        document.getElementById('advisor-name').value = data.name || '';
+                        document.getElementById('advisor-position').value = data.position || '';
+                        document.getElementById('advisor-whatsapp').value = data.whatsapp || '';
+                        let specialties = Array.isArray(data.specialties) ? data.specialties : [];
+                        if (typeof data.specialties === 'string') {
+                            try { specialties = JSON.parse(data.specialties); } catch (e) { console.error('Error parsing specialties:', e); specialties = []; }
+                        }
+                        document.querySelectorAll('input[name="specialties"]').forEach(checkbox => {
+                            checkbox.checked = specialties.includes(checkbox.value);
+                        });
+                        if (data.image_url) {
+                            document.getElementById('advisor-image-preview').innerHTML = `<img src="${data.image_url}" alt="Preview" style="max-width: 100px; max-height: 100px; object-fit: cover; margin-top: 10px;">`;
+                        }
+                    }
+                });
+            }
+            modal.show();
+        }
+
+       async function saveAdvisor() {
+    const id = document.getElementById('advisor-id').value;
+    const name = document.getElementById('advisor-name').value;
+    const position = document.getElementById('advisor-position').value;
+    const whatsapp = document.getElementById('advisor-whatsapp').value;
+    const specialties = Array.from(document.querySelectorAll('input[name="specialties"]:checked')).map(cb => cb.value);
+    let image_url = '';
+
+    if (document.getElementById('advisor-image-upload').files.length > 0) {
+        const file = document.getElementById('advisor-image-upload').files[0];
+        const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; // Limpia el nombre del archivo
+        const { error: uploadError, data } = await supabase.storage
+            .from('images')
+            .upload(fileName, file, { upsert: true });
+        if (uploadError) {
+            console.error('Error uploading image:', uploadError.message, uploadError);
+            Swal.fire('Error', `No se pudo subir la imagen: ${uploadError.message}. Verifica los permisos de RLS en Supabase Storage.`, 'error');
+            return;
+        }
+        image_url = `${supabaseUrl}/storage/v1/object/public/images/${fileName}`;
+    } else if (id) {
+        // Mantener la imagen existente si no se sube una nueva
+        const { data: existingData } = await supabase.from('advisors').select('image_url').eq('id', id).single();
+        image_url = existingData?.image_url || '';
+    } else {
+        image_url = 'https://via.placeholder.com/40'; // Placeholder para nuevos asesores sin imagen
+    }
+
+    const advisor = {
+        name,
+        position,
+        whatsapp,
+        specialties: JSON.stringify(specialties),
+        image_url,
+        deleted: false
+    };
+    let result;
+    try {
+        if (id) {
+            result = await supabase
+                .from('advisors')
+                .update(advisor)
+                .eq('id', id)
+                .eq('deleted', false);
+        } else {
+            result = await supabase
+                .from('advisors')
+                .insert(advisor);
+        }
+        if (result.error) {
+            console.error('Error saving advisor:', result.error);
+            Swal.fire('Error', 'No se pudo guardar el asesor', 'error');
+        } else {
+            Swal.fire('Guardado', 'El asesor ha sido guardado correctamente', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('advisorModal')).hide();
+            await loadAdvisors();
+        }
+    } catch (err) {
+        console.error('Excepción al guardar asesor:', err);
+        Swal.fire('Error', 'Ocurrió un error al guardar el asesor', 'error');
+    }
+}
+
+        async function editAdvisor(id) {
+            openAdvisorModal('edit', id);
+        }
+
+        async function deleteAdvisor(id) {
+            Swal.fire({
+                title: '¿Eliminar asesor?',
+                text: 'Esta acción no se puede deshacer.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const { error } = await supabase
+                        .from('advisors')
+                        .update({ deleted: true })
+                        .eq('id', id);
+                    if (error) {
+                        console.error('Error deleting advisor:', error);
+                        Swal.fire('Error', 'No se pudo eliminar el asesor', 'error');
+                    } else {
+                        Swal.fire('Eliminado', 'El asesor ha sido eliminado', 'success');
+                        await loadAdvisors();
+                    }
+                }
+            });
+        }
+
+        // Gallery CRUD (machine_products)
+        async function loadProducts() {
+            const { data, error } = await supabase
+                .from('machine_products')
+                .select('id, name, description, image_url, pdf_url, specifications, features, dimensions, deleted, created_at')
+                .eq('deleted', false)
+                .order('id', { ascending: false });
+            console.log('Datos de machine_products:', data);
+            if (error) {
+                console.error('Error al cargar productos:', error);
+                Swal.fire('Error', 'No se pudo cargar productos', 'error');
+                return;
+            }
+            const table = document.getElementById('gallery-table');
+            table.innerHTML = '';
+            data.forEach(product => {
+                let specs = Array.isArray(product.specifications) ? product.specifications : [];
+                if (typeof product.specifications === 'string') {
+                    try { specs = JSON.parse(product.specifications); } catch (e) { console.error('Error parsing specifications:', e); specs = []; }
+                }
+                let features = Array.isArray(product.features) ? product.features : [];
+                if (typeof product.features === 'string') {
+                    try { features = JSON.parse(product.features); } catch (e) { console.error('Error parsing features:', e); features = []; }
+                }
+                let dims = typeof product.dimensions === 'object' && product.dimensions !== null ? product.dimensions : { width: 0, height: 0, depth: 0, weight: 0 };
+                if (typeof product.dimensions === 'string') {
+                    try { dims = JSON.parse(product.dimensions); } catch (e) { console.error('Error parsing dimensions:', e); dims = { width: 0, height: 0, depth: 0, weight: 0 }; }
+                }
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${product.name || '-'}</td>
+                    <td>${product.description || '-'}</td>
+                    <td>
+                        ${specs.length 
+                            ? specs.map(s => `<span class="badge bg-info me-1">${s.label}: ${s.value}</span>`).join('') 
+                            : '<span class="text-muted">-</span>'}
+                    </td>
+                    <td>
+                        ${features.length 
+                            ? features.map(f => `<span class="badge bg-success me-1">${f}</span>`).join('') 
+                            : '<span class="text-muted">-</span>'}
+                    </td>
+                    <td>
+                        ${Object.keys(dims).length 
+                            ? `W: ${dims.width || 0}cm, H: ${dims.height || 0}cm, D: ${dims.depth || 0}cm, W: ${dims.weight || 0}kg`
+                            : '<span class="text-muted">-</span>'}
+                    </td>
+                    <td>
+                        <img src="${product.image_url || 'https://via.placeholder.com/40'}" alt="img" style="width:40px;height:40px;object-fit:cover;border-radius:10px;">
+                    </td>
+                    <td>
+                        ${product.pdf_url ? `<a href="${product.pdf_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fa fa-file-pdf"></i> PDF</a>` : '<span class="text-muted">-</span>'}
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-info me-2" onclick="editProduct(${product.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteProduct(${product.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        }
+
+        function openGalleryModal(action, id = null) {
+            const modal = new bootstrap.Modal(document.getElementById('galleryModal'));
+            document.getElementById('product-id').value = id || '';
+            document.getElementById('product-name').value = '';
+            document.getElementById('product-description').value = '';
+            document.getElementById('product-spec').value = '';
+            document.getElementById('product-feature').value = '';
+            document.getElementById('product-dimension').value = '';
+            document.getElementById('product-pdf').value = '';
+            document.getElementById('product-image-preview').textContent = '';
+            document.getElementById('product-image-upload').value = '';
+            document.getElementById('galleryModalLabel').textContent = id ? 'Editar Producto' : 'Agregar Producto';
+            if (id) {
+                supabase.from('machine_products').select('id, name, description, image_url, pdf_url, specifications, features, dimensions, deleted').eq('id', id).eq('deleted', false).single().then(({ data, error }) => {
+                    if (error) {
+                        console.error('Error fetching product:', error);
+                    } else if (data) {
+                        document.getElementById('product-name').value = data.name || '';
+                        document.getElementById('product-description').value = data.description || '';
+                        document.getElementById('product-spec').value = data.specifications && Array.isArray(data.specifications) ? data.specifications.map(s => `${s.label}: ${s.value}`).join(', ') : '';
+                        document.getElementById('product-feature').value = data.features && Array.isArray(data.features) ? data.features.join(', ') : '';
+                        document.getElementById('product-dimension').value = data.dimensions ? `${data.dimensions.width || 0}x${data.dimensions.height || 0}x${data.dimensions.depth || 0} cm` : '';
+                        document.getElementById('product-pdf').value = data.pdf_url || '';
+                        if (data.image_url) {
+                            document.getElementById('product-image-preview').innerHTML = `<img src="${data.image_url}" alt="Preview" style="max-width: 100px; max-height: 100px; object-fit: cover; margin-top: 10px;">`;
+                        }
+                    }
+                });
+            }
+            modal.show();
+        }
+
+        async function saveProduct() {
+            const id = document.getElementById('product-id').value;
+            const name = document.getElementById('product-name').value;
+            const description = document.getElementById('product-description').value;
+            const spec = document.getElementById('product-spec').value.split(',').map(s => s.trim()).filter(s => s).map(s => {
+                const [label, value] = s.split(':').map(p => p.trim());
+                return { label, value };
+            });
+            const feature = document.getElementById('product-feature').value.split(',').map(f => f.trim()).filter(f => f);
+            const dimensionStr = document.getElementById('product-dimension').value;
+            const dimensions = dimensionStr ? {
+                width: parseInt(dimensionStr.split('x')[0]) || 0,
+                height: parseInt(dimensionStr.split('x')[1]) || 0,
+                depth: parseInt(dimensionStr.split('x')[2]) || 0,
+                weight: 0
+            } : { width: 0, height: 0, depth: 0, weight: 0 };
+            const pdf_url = document.getElementById('product-pdf').value;
+            let image_url = '';
+
+            if (document.getElementById('product-image-upload').files.length > 0) {
+                const file = document.getElementById('product-image-upload').files[0];
+                const fileName = `${Date.now()}_${file.name}`;
+                const { error: uploadError, data } = await supabase.storage
+                    .from('images')
+                    .upload(`public/${fileName}`, file, { upsert: true });
+                if (uploadError) {
+                    console.error('Error uploading image:', uploadError);
+                    Swal.fire('Error', 'No se pudo subir la imagen', 'error');
+                    return;
+                }
+                image_url = `${supabaseUrl}/storage/v1/object/public/images/public/${fileName}`;
+            }
+
+            const product = {
+                name,
+                description,
+                image_url: image_url || document.getElementById('product-id').value ? '' : 'https://via.placeholder.com/40',
+                pdf_url,
+                specifications: JSON.stringify(spec),
+                features: JSON.stringify(feature),
+                dimensions: JSON.stringify(dimensions),
+                deleted: false
+            };
+            let result;
+            try {
+                if (id) {
+                    result = await supabase
+                        .from('machine_products')
+                        .update(product)
+                        .eq('id', id)
+                        .eq('deleted', false);
+                } else {
+                    result = await supabase
+                        .from('machine_products')
+                        .insert(product);
+                }
+                if (result.error) {
+                    console.error('Error saving product:', result.error);
+                    Swal.fire('Error', 'No se pudo guardar el producto', 'error');
+                } else {
+                    Swal.fire('Guardado', 'El producto ha sido guardado correctamente', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('galleryModal')).hide();
+                    await loadProducts();
+                }
+            } catch (err) {
+                console.error('Excepción al guardar producto:', err);
+                Swal.fire('Error', 'Ocurrió un error al guardar el producto', 'error');
+            }
+        }
+
+        async function editProduct(id) {
+            openGalleryModal('edit', id);
+        }
+
+        async function deleteProduct(id) {
+            Swal.fire({
+                title: '¿Eliminar producto?',
+                text: 'Esta acción no se puede deshacer.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const { error } = await supabase
+                        .from('machine_products')
+                        .update({ deleted: true })
+                        .eq('id', id);
+                    if (error) {
+                        console.error('Error deleting product:', error);
+                        Swal.fire('Error', 'No se pudo eliminar el producto', 'error');
+                    } else {
+                        Swal.fire('Eliminado', 'El producto ha sido eliminado', 'success');
+                        await loadProducts();
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
