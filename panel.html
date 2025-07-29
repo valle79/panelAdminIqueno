@@ -32,7 +32,7 @@
             padding: 1.5rem 0;
             box-shadow: 2px 0 8px rgba(0,0,0,0.1);
             z-index: 1000;
-            transition: transform 0.3s ease-in-out;
+            transition: transform 0.3s ease;
         }
 
         #sidebar-wrapper .logo-container {
@@ -44,11 +44,6 @@
         #sidebar-wrapper .logo {
             max-width: 150px;
             height: auto;
-            transition: transform 0.2s;
-        }
-
-        #sidebar-wrapper .logo:hover {
-            transform: scale(1.05);
         }
 
         #sidebar-wrapper .sidebar-title {
@@ -68,7 +63,7 @@
             margin: 0.3rem 0;
             display: flex;
             align-items: center;
-            transition: background 0.2s, color 0.2s, transform 0.2s;
+            transition: background 0.2s, color 0.2s;
         }
 
         #sidebar-wrapper .nav-link i {
@@ -79,14 +74,13 @@
         #sidebar-wrapper .nav-link:hover {
             background: rgba(255,255,255,0.2);
             color: var(--secondary);
-            transform: translateX(5px);
         }
 
         #page-content-wrapper {
             margin-left: 250px;
             padding: 1.5rem;
             min-height: 100vh;
-            transition: margin-left 0.3s ease-in-out;
+            transition: margin-left 0.3s;
         }
 
         .navbar {
@@ -94,25 +88,12 @@
             border-radius: 10px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             padding: 0.75rem 1rem;
-            position: relative;
-            z-index: 999;
         }
 
         .navbar .navbar-text {
             color: white;
             font-weight: 500;
             font-size: 0.9rem;
-        }
-
-        .navbar .hamburger {
-            display: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
         }
 
         .section-title {
@@ -148,46 +129,19 @@
             border-left: 4px solid var(--secondary);
         }
 
-        .table-responsive {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
         .table {
             font-size: 0.9rem;
-            min-width: 800px; /* Ensures horizontal scroll for wide content */
         }
 
         .table th {
             background: var(--light);
             color: var(--dark);
             font-weight: 500;
-            padding: 0.75rem;
         }
 
         .table td {
             vertical-align: middle;
             color: var(--dark);
-            padding: 0.75rem;
-        }
-
-        /* Custom Scrollbar */
-        .table-responsive::-webkit-scrollbar {
-            height: 8px;
-        }
-
-        .table-responsive::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-
-        .table-responsive::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 4px;
-        }
-
-        .table-responsive::-webkit-scrollbar-thumb:hover {
-            background: #218838;
         }
 
         .btn-primary {
@@ -196,12 +150,11 @@
             border-radius: 8px;
             padding: 0.5rem 1rem;
             font-size: 0.9rem;
-            transition: background 0.2s, transform 0.2s;
+            transition: background 0.2s;
         }
 
         .btn-primary:hover {
             background: linear-gradient(90deg, #218838 0%, #e0a800 100%);
-            transform: translateY(-1px);
         }
 
         .btn-info {
@@ -210,11 +163,6 @@
             border-radius: 8px;
             color: var(--dark);
             font-size: 0.85rem;
-            transition: transform 0.2s;
-        }
-
-        .btn-info:hover {
-            transform: translateY(-1px);
         }
 
         .btn-danger {
@@ -222,11 +170,6 @@
             border: none;
             border-radius: 8px;
             font-size: 0.85rem;
-            transition: transform 0.2s;
-        }
-
-        .btn-danger:hover {
-            transform: translateY(-1px);
         }
 
         .modal-content {
@@ -275,13 +218,12 @@
             cursor: pointer;
             border-radius: 8px;
             background: #fff;
-            transition: background 0.2s, transform 0.2s;
+            transition: background 0.2s;
             font-size: 0.9rem;
         }
 
         .custom-file-input:hover {
             background: #f1f9f4;
-            transform: scale(1.02);
         }
 
         .specialty-checkbox {
@@ -314,8 +256,21 @@
                 margin-left: 0;
             }
 
-            .navbar .hamburger {
-                display: block;
+            .navbar {
+                position: relative;
+            }
+
+            .navbar::before {
+                content: '\f0c9';
+                font-family: 'Font Awesome 6 Free';
+                font-weight: 900;
+                color: white;
+                font-size: 1.2rem;
+                position: absolute;
+                left: 1rem;
+                top: 50%;
+                transform: translateY(-50%);
+                cursor: pointer;
             }
 
             .navbar .navbar-text {
@@ -343,7 +298,6 @@
 
             .table {
                 font-size: 0.8rem;
-                min-width: 600px; /* Adjusted for smaller screens */
             }
 
             .modal-dialog {
@@ -379,7 +333,6 @@
         <div id="page-content-wrapper">
             <nav class="navbar navbar-expand-lg mb-4 px-3">
                 <div class="container-fluid">
-                    <i class="fas fa-bars hamburger"></i>
                     <span class="navbar-text ms-auto">Bienvenido, <span id="user-name"></span></span>
                 </div>
             </nav>
@@ -598,15 +551,10 @@
                     await loadAdvisors();
                     await loadProducts();
 
-                    // Toggle sidebar on hamburger click
-                    document.querySelector('.hamburger').addEventListener('click', () => {
-                        document.getElementById('sidebar-wrapper').classList.toggle('active');
-                    });
-
-                    // Close sidebar when clicking outside on mobile
-                    document.addEventListener('click', (e) => {
-                        if (window.innerWidth <= 992 && !e.target.closest('#sidebar-wrapper') && !e.target.closest('.hamburger')) {
-                            document.getElementById('sidebar-wrapper').classList.remove('active');
+                    // Toggle sidebar on mobile
+                    document.querySelector('.navbar').addEventListener('click', (e) => {
+                        if (window.innerWidth <= 992 && e.target.classList.contains('navbar')) {
+                            document.getElementById('sidebar-wrapper').classList.toggle('active');
                         }
                     });
                 }
