@@ -256,6 +256,11 @@
             transform: translateY(-1px);
         }
 
+        .btn-primary:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
         .btn-secondary {
             background: #6c757d;
             border: none;
@@ -378,11 +383,45 @@
         }
 
         .custom-file-input img.preview {
-            max-width: 100%;
-            max-height: 150px;
+            max-width: 80px;
+            max-height: 80px;
             object-fit: cover;
             border-radius: 8px;
             margin-top: 0.5rem;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .preview-container {
+            position: relative;
+            display: inline-block;
+            margin-top: 0.5rem;
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+
+        .preview-container .remove-image {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: transform 0.2s;
+        }
+
+        .preview-container .remove-image:hover {
+            background: #c82333;
+            transform: scale(1.1);
         }
 
         .specialty-checkbox {
@@ -410,6 +449,31 @@
             margin-top: 0.5rem;
             font-size: 0.8rem;
             color: var(--dark);
+        }
+
+        .spec-container, .feature-container {
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .spec-item, .feature-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 0.3rem;
+        }
+
+        .spec-item button, .feature-item button {
+            font-size: 0.8rem;
+        }
+
+        .dimension-input {
+            width: 100px;
         }
 
         /* Responsive Design */
@@ -472,6 +536,15 @@
 
             .form-control, .custom-file-input {
                 font-size: 0.85rem;
+            }
+
+            .custom-file-input img.preview {
+                max-width: 60px;
+                max-height: 60px;
+            }
+
+            .dimension-input {
+                width: 80px;
             }
         }
     </style>
@@ -654,54 +727,111 @@
                 <div class="modal-body">
                     <input type="hidden" id="product-id">
                     <div class="row g-3">
+                        <!-- Nombre del Producto -->
                         <div class="col-12">
-                            <label class="form-label">
-                                <i class="fas fa-box"></i> Nombre del Producto
-                                <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Ingrese el nombre del producto (máximo 100 caracteres)."></i>
-                            </label>
-                            <input type="text" class="form-control" id="product-name" placeholder="Ej. Cultivadora 3000" maxlength="100" required>
-                            <div class="invalid-feedback">Por favor, ingrese el nombre del producto.</div>
+                            <fieldset>
+                                <legend class="form-label"><i class="fas fa-box"></i> Nombre del Producto</legend>
+                                <input type="text" class="form-control" id="product-name" placeholder="Ej. Cultivadora 3000" maxlength="100" required>
+                                <div class="invalid-feedback">Por favor, ingrese un nombre (máximo 100 caracteres).</div>
+                                <small class="form-text text-muted">Nombre único para identificar el producto.</small>
+                            </fieldset>
                         </div>
+                        <!-- Descripción -->
                         <div class="col-12">
-                            <label class="form-label">
-                                <i class="fas fa-align-left"></i> Descripción
-                                <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Breve descripción del producto (opcional)."></i>
-                            </label>
-                            <textarea class="form-control" id="product-description" placeholder="Ej. Máquina para preparación de suelos" rows="3"></textarea>
+                            <fieldset>
+                                <legend class="form-label"><i class="fas fa-align-left"></i> Descripción</legend>
+                                <textarea class="form-control" id="product-description" placeholder="Ej. Máquina para preparación de suelos, ideal para cultivos intensivos" rows="3"></textarea>
+                                <small class="form-text text-muted">Descripción breve del producto (opcional).</small>
+                            </fieldset>
                         </div>
+                        <!-- Especificaciones -->
                         <div class="col-12">
-                            <label class="form-label">
-                                <i class="fas fa-list"></i> Detalles Adicionales
-                                <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Especificaciones, características o dimensiones (opcional). Ej: Potencia: 100HP, Ancho: 2m"></i>
-                            </label>
-                            <textarea class="form-control" id="product-details" placeholder="Ej. Potencia: 100HP, Ancho: 2m, Duradera y eficiente" rows="4"></textarea>
+                            <fieldset>
+                                <legend class="form-label"><i class="fas fa-list"></i> Especificaciones</legend>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control" id="spec-label" placeholder="Ej. Potencia" maxlength="50">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control" id="spec-value" placeholder="Ej. 100 HP" maxlength="100">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-primary w-100" onclick="addSpecification()"><i class="fas fa-plus"></i> Añadir</button>
+                                    </div>
+                                </div>
+                                <div id="specifications-list" class="spec-container"></div>
+                                <small class="form-text text-muted">Añada especificaciones técnicas (opcional).</small>
+                            </fieldset>
                         </div>
+                        <!-- Características -->
                         <div class="col-12">
-                            <label class="form-label">
-                                <i class="fas fa-file-pdf"></i> URL de PDF
-                                <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Enlace al documento PDF del producto (opcional)."></i>
-                            </label>
-                            <input type="url" class="form-control" id="product-pdf" placeholder="Ej. https://ejemplo.com/ficha-tecnica.pdf">
-                            <div class="invalid-feedback">Por favor, ingrese una URL válida.</div>
+                            <fieldset>
+                                <legend class="form-label"><i class="fas fa-check-circle"></i> Características</legend>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-10">
+                                        <input type="text" class="form-control" id="feature-input" placeholder="Ej. Alta durabilidad" maxlength="200">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-primary w-100" onclick="addFeature()"><i class="fas fa-plus"></i> Añadir</button>
+                                    </div>
+                                </div>
+                                <div id="features-list" class="feature-container"></div>
+                                <small class="form-text text-muted">Añada características destacadas (opcional).</small>
+                            </fieldset>
                         </div>
+                        <!-- Dimensiones -->
                         <div class="col-12">
-                            <label class="form-label">
-                                <i class="fas fa-image"></i> Imagen del Producto
-                                <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Suba una imagen en formato JPG, PNG o GIF (máximo 5MB)."></i>
-                            </label>
-                            <div class="custom-file-input" id="product-image-dropzone">
-                                <i class="fas fa-upload fa-2x"></i><br>
-                                Arrastra una imagen aquí o haz clic para seleccionarla
-                                <input type="file" class="d-none" id="product-image-upload" accept="image/*">
-                                <div class="upload-progress">Cargando...</div>
-                            </div>
-                            <small id="product-image-preview" class="mt-2 d-block"></small>
+                            <fieldset>
+                                <legend class="form-label"><i class="fas fa-ruler-combined"></i> Dimensiones</legend>
+                                <div class="row g-2">
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label">Ancho (cm)</label>
+                                        <input type="number" class="form-control dimension-input" id="dimension-width" placeholder="0" min="0" step="0.1">
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label">Alto (cm)</label>
+                                        <input type="number" class="form-control dimension-input" id="dimension-height" placeholder="0" min="0" step="0.1">
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label">Profundidad (cm)</label>
+                                        <input type="number" class="form-control dimension-input" id="dimension-depth" placeholder="0" min="0" step="0.1">
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label">Peso (kg)</label>
+                                        <input type="number" class="form-control dimension-input" id="dimension-weight" placeholder="0" min="0" step="0.1">
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">Dimensiones y peso del producto (opcional).</small>
+                            </fieldset>
+                        </div>
+                        <!-- URL de PDF -->
+                        <div class="col-12">
+                            <fieldset>
+                                <legend class="form-label"><i class="fas fa-file-pdf"></i> Ficha Técnica (PDF)</legend>
+                                <input type="url" class="form-control" id="product-pdf" placeholder="Ej. https://ejemplo.com/ficha-tecnica.pdf">
+                                <div class="invalid-feedback">Por favor, ingrese una URL válida.</div>
+                                <small class="form-text text-muted">Enlace al documento PDF (opcional).</small>
+                            </fieldset>
+                        </div>
+                        <!-- Imagen del Producto -->
+                        <div class="col-12">
+                            <fieldset>
+                                <legend class="form-label"><i class="fas fa-image"></i> Imagen del Producto</legend>
+                                <div class="custom-file-input" id="product-image-dropzone">
+                                    <i class="fas fa-upload fa-2x"></i><br>
+                                    Arrastra una imagen aquí o haz clic para seleccionarla (JPG, PNG, GIF, máx. 5MB)
+                                    <input type="file" class="d-none" id="product-image-upload" accept="image/jpeg,image/png,image/gif">
+                                    <div class="upload-progress">Cargando... <span id="upload-progress-text"></span></div>
+                                </div>
+                                <div id="product-image-preview" class="mt-2"></div>
+                                <small class="form-text text-muted">Imagen requerida para el producto.</small>
+                            </fieldset>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary" onclick="saveProduct()">Guardar</button>
+                    <button type="button" class="btn btn-primary" id="save-product-btn" onclick="saveProduct()" disabled>Guardar</button>
                 </div>
             </div>
         </div>
@@ -766,15 +896,26 @@
                         dropzone.classList.remove('dragover');
                         const files = e.dataTransfer.files;
                         if (files.length) {
-                            input.files = files;
-                            previewImage(files[0]);
+                            if (validateImage(files[0])) {
+                                input.files = files;
+                                previewImage(files[0]);
+                            }
                         }
                     });
                     input.addEventListener('change', () => {
                         if (input.files.length) {
-                            previewImage(input.files[0]);
+                            if (validateImage(input.files[0])) {
+                                previewImage(input.files[0]);
+                            } else {
+                                input.value = '';
+                            }
                         }
                     });
+
+                    // Validación en tiempo real
+                    document.getElementById('product-name').addEventListener('input', validateForm);
+                    document.getElementById('product-pdf').addEventListener('input', validateForm);
+                    document.getElementById('product-image-upload').addEventListener('change', validateForm);
                 }
             } catch (err) {
                 console.error('Error al verificar usuario:', err);
@@ -782,14 +923,108 @@
             }
         });
 
+        // Validar imagen (tamaño y formato)
+        function validateImage(file) {
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                Swal.fire('Error', 'Solo se permiten imágenes JPG, PNG o GIF.', 'error');
+                return false;
+            }
+            if (file.size > maxSize) {
+                Swal.fire('Error', 'La imagen no debe superar los 5MB.', 'error');
+                return false;
+            }
+            return true;
+        }
+
         // Image preview function
         function previewImage(file) {
             const preview = document.getElementById('product-image-preview');
             const reader = new FileReader();
             reader.onload = () => {
-                preview.innerHTML = `<img src="${reader.result}" alt="Preview" class="preview">`;
+                preview.innerHTML = `
+                    <div class="preview-container">
+                        <img src="${reader.result}" alt="Preview" class="preview">
+                        <button type="button" class="remove-image" onclick="removeImagePreview()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
             };
             reader.readAsDataURL(file);
+            validateForm();
+        }
+
+        // Remove image preview
+        function removeImagePreview() {
+            const preview = document.getElementById('product-image-preview');
+            const input = document.getElementById('product-image-upload');
+            preview.innerHTML = '';
+            input.value = '';
+            validateForm();
+        }
+
+        // Validar formulario en tiempo real
+        function validateForm() {
+            const name = document.getElementById('product-name').value;
+            const pdf = document.getElementById('product-pdf').value;
+            const image = document.getElementById('product-image-upload').files.length;
+            const saveBtn = document.getElementById('save-product-btn');
+
+            // Validar nombre
+            const nameValid = name && name.length <= 100;
+            document.getElementById('product-name').classList.toggle('is-invalid', !nameValid);
+
+            // Validar PDF
+            const pdfValid = !pdf || /^(https?:\/\/)/i.test(pdf);
+            document.getElementById('product-pdf').classList.toggle('is-invalid', !pdfValid);
+
+            // Habilitar botón si nombre e imagen son válidos
+            saveBtn.disabled = !nameValid || !image;
+        }
+
+        // Añadir especificación
+        function addSpecification() {
+            const label = document.getElementById('spec-label').value.trim();
+            const value = document.getElementById('spec-value').value.trim();
+            if (!label || !value) {
+                Swal.fire('Error', 'Por favor, complete ambos campos de especificación.', 'error');
+                return;
+            }
+            const list = document.getElementById('specifications-list');
+            const specId = `spec-${Date.now()}`;
+            const specItem = document.createElement('div');
+            specItem.className = 'spec-item';
+            specItem.innerHTML = `
+                <span>${label}: ${value}</span>
+                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+            `;
+            specItem.dataset.label = label;
+            specItem.dataset.value = value;
+            list.appendChild(specItem);
+            document.getElementById('spec-label').value = '';
+            document.getElementById('spec-value').value = '';
+        }
+
+        // Añadir característica
+        function addFeature() {
+            const feature = document.getElementById('feature-input').value.trim();
+            if (!feature) {
+                Swal.fire('Error', 'Por favor, ingrese una característica.', 'error');
+                return;
+            }
+            const list = document.getElementById('features-list');
+            const featureId = `feature-${Date.now()}`;
+            const featureItem = document.createElement('div');
+            featureItem.className = 'feature-item';
+            featureItem.innerHTML = `
+                <span>${feature}</span>
+                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+            `;
+            featureItem.dataset.feature = feature;
+            list.appendChild(featureItem);
+            document.getElementById('feature-input').value = '';
         }
 
         // Logout
@@ -904,7 +1139,7 @@
 
             if (document.getElementById('advisor-image-upload').files.length > 0) {
                 const file = document.getElementById('advisor-image-upload').files[0];
-                const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                const fileName = `advisors/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
                 const { error: uploadError } = await supabase.storage
                     .from('images')
                     .upload(fileName, file, { upsert: true });
@@ -913,7 +1148,10 @@
                     Swal.fire('Error', `No se pudo subir la imagen: ${uploadError.message}`, 'error');
                     return;
                 }
-                image_url = `${supabaseUrl}/storage/v1/object/public/images/${fileName}`;
+                const { data: publicUrlData } = supabase.storage
+                    .from('images')
+                    .getPublicUrl(fileName);
+                image_url = publicUrlData.publicUrl;
             } else if (id) {
                 const { data: existingData } = await supabase.from('advisors').select('image_url').eq('id', id).single();
                 image_url = existingData?.image_url || '';
@@ -1045,10 +1283,19 @@
             document.getElementById('product-id').value = id || '';
             document.getElementById('product-name').value = '';
             document.getElementById('product-description').value = '';
-            document.getElementById('product-details').value = '';
+            document.getElementById('spec-label').value = '';
+            document.getElementById('spec-value').value = '';
+            document.getElementById('feature-input').value = '';
+            document.getElementById('dimension-width').value = '';
+            document.getElementById('dimension-height').value = '';
+            document.getElementById('dimension-depth').value = '';
+            document.getElementById('dimension-weight').value = '';
             document.getElementById('product-pdf').value = '';
-            document.getElementById('product-image-preview').textContent = '';
+            document.getElementById('product-image-preview').innerHTML = '';
             document.getElementById('product-image-upload').value = '';
+            document.getElementById('specifications-list').innerHTML = '';
+            document.getElementById('features-list').innerHTML = '';
+            document.getElementById('save-product-btn').disabled = true;
             document.getElementById('galleryModalLabel').textContent = id ? 'Editar Producto' : 'Agregar Producto';
             if (id) {
                 supabase.from('machine_products').select('id, name, description, image_url, pdf_url, specifications, features, dimensions, deleted').eq('id', id).eq('deleted', false).single().then(({ data, error }) => {
@@ -1057,21 +1304,62 @@
                     } else if (data) {
                         document.getElementById('product-name').value = data.name || '';
                         document.getElementById('product-description').value = data.description || '';
-                        let details = [];
-                        if (data.specifications && Array.isArray(data.specifications)) {
-                            details.push(...data.specifications.map(s => `${s.label}: ${s.value}`));
-                        }
-                        if (data.features && Array.isArray(data.features)) {
-                            details.push(...data.features);
-                        }
-                        if (data.dimensions && typeof data.dimensions === 'object') {
-                            details.push(`Dimensiones: W: ${data.dimensions.width || 0}cm, H: ${data.dimensions.height || 0}cm, D: ${data.dimensions.depth || 0}cm`);
-                        }
-                        document.getElementById('product-details').value = details.join('\n');
                         document.getElementById('product-pdf').value = data.pdf_url || '';
                         if (data.image_url) {
-                            document.getElementById('product-image-preview').innerHTML = `<img src="${data.image_url}" alt="Preview" class="preview">`;
+                            document.getElementById('product-image-preview').innerHTML = `
+                                <div class="preview-container">
+                                    <img src="${data.image_url}" alt="Preview" class="preview">
+                                    <button type="button" class="remove-image" onclick="removeImagePreview()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            `;
+                            document.getElementById('save-product-btn').disabled = !data.name;
                         }
+                        // Cargar especificaciones
+                        let specs = Array.isArray(data.specifications) ? data.specifications : [];
+                        if (typeof data.specifications === 'string') {
+                            try { specs = JSON.parse(data.specifications); } catch (e) { console.error('Error parsing specifications:', e); specs = []; }
+                        }
+                        specs.forEach(spec => {
+                            const list = document.getElementById('specifications-list');
+                            const specId = `spec-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                            const specItem = document.createElement('div');
+                            specItem.className = 'spec-item';
+                            specItem.innerHTML = `
+                                <span>${spec.label}: ${spec.value}</span>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+                            `;
+                            specItem.dataset.label = spec.label;
+                            specItem.dataset.value = spec.value;
+                            list.appendChild(specItem);
+                        });
+                        // Cargar características
+                        let features = Array.isArray(data.features) ? data.features : [];
+                        if (typeof data.features === 'string') {
+                            try { features = JSON.parse(data.features); } catch (e) { console.error('Error parsing features:', e); features = []; }
+                        }
+                        features.forEach(feature => {
+                            const list = document.getElementById('features-list');
+                            const featureId = `feature-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                            const featureItem = document.createElement('div');
+                            featureItem.className = 'feature-item';
+                            featureItem.innerHTML = `
+                                <span>${feature}</span>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+                            `;
+                            featureItem.dataset.feature = feature;
+                            list.appendChild(featureItem);
+                        });
+                        // Cargar dimensiones
+                        let dims = typeof data.dimensions === 'object' && data.dimensions !== null ? data.dimensions : { width: 0, height: 0, depth: 0, weight: 0 };
+                        if (typeof data.dimensions === 'string') {
+                            try { dims = JSON.parse(data.dimensions); } catch (e) { console.error('Error parsing dimensions:', e); dims = { width: 0, height: 0, depth: 0, weight: 0 }; }
+                        }
+                        document.getElementById('dimension-width').value = dims.width || '';
+                        document.getElementById('dimension-height').value = dims.height || '';
+                        document.getElementById('dimension-depth').value = dims.depth || '';
+                        document.getElementById('dimension-weight').value = dims.weight || '';
                     }
                 });
             }
@@ -1082,63 +1370,54 @@
             const id = document.getElementById('product-id').value;
             const name = document.getElementById('product-name').value;
             const description = document.getElementById('product-description').value;
-            const details = document.getElementById('product-details').value;
             const pdf_url = document.getElementById('product-pdf').value;
+            const specifications = Array.from(document.querySelectorAll('#specifications-list .spec-item')).map(item => ({
+                label: item.dataset.label,
+                value: item.dataset.value
+            }));
+            const features = Array.from(document.querySelectorAll('#features-list .feature-item')).map(item => item.dataset.feature);
+            const dimensions = {
+                width: parseFloat(document.getElementById('dimension-width').value) || 0,
+                height: parseFloat(document.getElementById('dimension-height').value) || 0,
+                depth: parseFloat(document.getElementById('dimension-depth').value) || 0,
+                weight: parseFloat(document.getElementById('dimension-weight').value) || 0
+            };
 
             // Validar campos requeridos
             if (!name) {
                 document.getElementById('product-name').classList.add('is-invalid');
+                Swal.fire('Error', 'El nombre del producto es requerido.', 'error');
                 return;
-            } else {
-                document.getElementById('product-name').classList.remove('is-invalid');
             }
-
-            // Validar URL del PDF
+            if (!document.getElementById('product-image-upload').files.length && !id) {
+                Swal.fire('Error', 'La imagen del producto es requerida.', 'error');
+                return;
+            }
             if (pdf_url && !/^(https?:\/\/)/i.test(pdf_url)) {
                 document.getElementById('product-pdf').classList.add('is-invalid');
+                Swal.fire('Error', 'Por favor, ingrese una URL válida para el PDF.', 'error');
                 return;
-            } else {
-                document.getElementById('product-pdf').classList.remove('is-invalid');
             }
-
-            // Parsear detalles en especificaciones, características y dimensiones
-            const detailsLines = details.split('\n').map(line => line.trim()).filter(line => line);
-            let specifications = [];
-            let features = [];
-            let dimensions = { width: 0, height: 0, depth: 0, weight: 0 };
-            detailsLines.forEach(line => {
-                if (line.toLowerCase().startsWith('dimensiones:')) {
-                    const dims = line.replace('Dimensiones:', '').split(',').map(d => d.trim());
-                    dims.forEach(dim => {
-                        const [key, value] = dim.split(':').map(s => s.trim());
-                        if (key.toLowerCase().startsWith('w')) dimensions.width = parseFloat(value) || 0;
-                        if (key.toLowerCase().startsWith('h')) dimensions.height = parseFloat(value) || 0;
-                        if (key.toLowerCase().startsWith('d')) dimensions.depth = parseFloat(value) || 0;
-                        if (key.toLowerCase().startsWith('w', 1)) dimensions.weight = parseFloat(value) || 0;
-                    });
-                } else if (line.includes(':')) {
-                    const [label, value] = line.split(':').map(s => s.trim());
-                    specifications.push({ label, value });
-                } else {
-                    features.push(line);
-                }
-            });
 
             let image_url = '';
             if (document.getElementById('product-image-upload').files.length > 0) {
                 const file = document.getElementById('product-image-upload').files[0];
-                const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                const fileName = `products/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
                 document.querySelector('.upload-progress').style.display = 'block';
+                document.getElementById('upload-progress-text').textContent = 'Subiendo imagen...';
                 const { error: uploadError } = await supabase.storage
                     .from('images')
-                    .upload(`public/${fileName}`, file, { upsert: true });
+                    .upload(fileName, file, { upsert: true });
                 document.querySelector('.upload-progress').style.display = 'none';
                 if (uploadError) {
                     console.error('Error uploading image:', uploadError);
                     Swal.fire('Error', 'No se pudo subir la imagen', 'error');
                     return;
                 }
-                image_url = `${supabaseUrl}/storage/v1/object/public/images/public/${fileName}`;
+                const { data: publicUrlData } = supabase.storage
+                    .from('images')
+                    .getPublicUrl(fileName);
+                image_url = publicUrlData.publicUrl;
             } else if (id) {
                 const { data: existingData } = await supabase.from('machine_products').select('image_url').eq('id', id).single();
                 image_url = existingData?.image_url || '';
