@@ -426,7 +426,7 @@
             border-radius: 8px;
         }
 
-        .preview-container .remove-image {
+        .preview-container .remove-file {
             position: absolute;
             top: -8px;
             right: -8px;
@@ -444,7 +444,7 @@
             transition: transform 0.2s;
         }
 
-        .preview-container .remove-image:hover {
+        .preview-container .remove-file:hover {
             background: #c82333;
             transform: scale(1.1);
         }
@@ -501,7 +501,6 @@
             width: 100px;
         }
 
-        /* Responsive Design */
         @media (max-width: 992px) {
             #sidebar-wrapper {
                 transform: translateX(-250px);
@@ -854,13 +853,18 @@
                                 <small class="form-text text-muted">Dimensiones y peso del producto (opcional).</small>
                             </fieldset>
                         </div>
-                        <!-- URL de PDF -->
+                        <!-- PDF Upload -->
                         <div class="col-12">
                             <fieldset>
                                 <legend class="form-label"><i class="fas fa-file-pdf"></i> Ficha Técnica (PDF)</legend>
-                                <input type="url" class="form-control" id="product-pdf" placeholder="Ej. https://ejemplo.com/ficha-tecnica.pdf">
-                                <div class="invalid-feedback">Por favor, ingrese una URL válida.</div>
-                                <small class="form-text text-muted">Enlace al documento PDF (opcional).</small>
+                                <div class="custom-file-input" id="product-pdf-dropzone">
+                                    <i class="fas fa-upload fa-2x"></i><br>
+                                    Arrastra un PDF aquí o haz clic para seleccionarlo (máx. 10MB)
+                                    <input type="file" class="d-none" id="product-pdf-upload" accept="application/pdf">
+                                    <div class="upload-progress">Cargando... <span id="upload-progress-text"></span></div>
+                                </div>
+                                <div id="product-pdf-preview" class="mt-2"></div>
+                                <small class="form-text text-muted">Suba un archivo PDF con la ficha técnica (opcional, máximo 10MB).</small>
                             </fieldset>
                         </div>
                         <!-- Imagen del Producto -->
@@ -898,6 +902,10 @@
         const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
         let currentUser = null;
+        let currentImageFile = null;
+        let currentPDFFile = null;
+        let existingImagePath = null;
+        let existingPDFPath = null;
 
         // Verificar autenticación al cargar la página
         document.addEventListener('DOMContentLoaded', async () => {
@@ -930,42 +938,98 @@
                         new bootstrap.Tooltip(el);
                     });
 
-                    // Drag and drop for image upload
-                    const dropzone = document.getElementById('product-image-dropzone');
-                    const input = document.getElementById('product-image-upload');
-                    dropzone.addEventListener('click', () => input.click());
-                    dropzone.addEventListener('dragover', (e) => {
+                    // Drag and drop for advisor image upload
+                    const advisorImageDropzone = document.querySelector('#advisorModal .custom-file-input');
+                    const advisorImageInput = document.getElementById('advisor-image-upload');
+                    advisorImageDropzone.addEventListener('dragover', (e) => {
                         e.preventDefault();
-                        dropzone.classList.add('dragover');
+                        advisorImageDropzone.classList.add('dragover');
                     });
-                    dropzone.addEventListener('dragleave', () => {
-                        dropzone.classList.remove('dragover');
+                    advisorImageDropzone.addEventListener('dragleave', () => {
+                        advisorImageDropzone.classList.remove('dragover');
                     });
-                    dropzone.addEventListener('drop', (e) => {
+                    advisorImageDropzone.addEventListener('drop', (e) => {
                         e.preventDefault();
-                        dropzone.classList.remove('dragover');
+                        advisorImageDropzone.classList.remove('dragover');
+                        const files = e.dataTransfer.files;
+                        if (files.length) {
+                            advisorImageInput.files = files;
+                            previewAdvisorImage(files[0]);
+                        }
+                    });
+                    advisorImageInput.addEventListener('change', () => {
+                        if (advisorImageInput.files.length) {
+                            previewAdvisorImage(advisorImageInput.files[0]);
+                        }
+                    });
+
+                    // Drag and drop for product image upload
+                    const imageDropzone = document.getElementById('product-image-dropzone');
+                    const imageInput = document.getElementById('product-image-upload');
+                    imageDropzone.addEventListener('click', () => imageInput.click());
+                    imageDropzone.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        imageDropzone.classList.add('dragover');
+                    });
+                    imageDropzone.addEventListener('dragleave', () => {
+                        imageDropzone.classList.remove('dragover');
+                    });
+                    imageDropzone.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        imageDropzone.classList.remove('dragover');
                         const files = e.dataTransfer.files;
                         if (files.length) {
                             if (validateImage(files[0])) {
-                                input.files = files;
+                                imageInput.files = files;
                                 previewImage(files[0]);
                             }
                         }
                     });
-                    input.addEventListener('change', () => {
-                        if (input.files.length) {
-                            if (validateImage(input.files[0])) {
-                                previewImage(input.files[0]);
+                    imageInput.addEventListener('change', () => {
+                        if (imageInput.files.length) {
+                            if (validateImage(imageInput.files[0])) {
+                                previewImage(imageInput.files[0]);
                             } else {
-                                input.value = '';
+                                imageInput.value = '';
                             }
                         }
                     });
 
-                    // Validación en tiempo real
-                    document.getElementById('product-name').addEventListener('input', validateForm);
-                    document.getElementById('product-pdf').addEventListener('input', validateForm);
-                    document.getElementById('product-image-upload').addEventListener('change', validateForm);
+                    // Drag and drop for PDF upload
+                    const pdfDropzone = document.getElementById('product-pdf-dropzone');
+                    const pdfInput = document.getElementById('product-pdf-upload');
+                    pdfDropzone.addEventListener('click', () => pdfInput.click());
+                    pdfDropzone.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        pdfDropzone.classList.add('dragover');
+                    });
+                    pdfDropzone.addEventListener('dragleave', () => {
+                        pdfDropzone.classList.remove('dragover');
+                    });
+                    pdfDropzone.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        pdfDropzone.classList.remove('dragover');
+                        const files = e.dataTransfer.files;
+                        if (files.length) {
+                            if (validatePDF(files[0])) {
+                                pdfInput.files = files;
+                                previewPDF(files[0]);
+                            }
+                        }
+                    });
+                    pdfInput.addEventListener('change', () => {
+                        if (pdfInput.files.length) {
+                            if (validatePDF(pdfInput.files[0])) {
+                                previewPDF(pdfInput.files[0]);
+                            } else {
+                                pdfInput.value = '';
+                            }
+                        }
+                    });
+
+                    // Enable save button when product name and image are provided
+                    document.getElementById('product-name').addEventListener('input', toggleSaveButton);
+                    imageInput.addEventListener('change', toggleSaveButton);
                 }
             } catch (err) {
                 console.error('Error al verificar usuario:', err);
@@ -973,7 +1037,7 @@
             }
         });
 
-        // Validar imagen (tamaño y formato)
+        // Validar imagen
         function validateImage(file) {
             const maxSize = 5 * 1024 * 1024; // 5MB
             const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
@@ -988,107 +1052,98 @@
             return true;
         }
 
-        // Image preview function
+        // Validar PDF
+        function validatePDF(file) {
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.type !== 'application/pdf') {
+                Swal.fire('Error', 'Solo se permiten archivos PDF.', 'error');
+                return false;
+            }
+            if (file.size > maxSize) {
+                Swal.fire('Error', 'El PDF no debe superar los 10MB.', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        // Vista previa de imagen de producto
         function previewImage(file) {
             const preview = document.getElementById('product-image-preview');
+            preview.innerHTML = '';
             const reader = new FileReader();
-            reader.onload = () => {
-                preview.innerHTML = `
-                    <div class="preview-container">
-                        <img src="${reader.result}" alt="Preview" class="preview">
-                        <button type="button" class="remove-image" onclick="removeImagePreview()">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                `;
+            reader.onload = (e) => {
+                const container = document.createElement('div');
+                container.className = 'preview-container';
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'preview';
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-file';
+                removeBtn.innerHTML = '&times;';
+                removeBtn.onclick = () => {
+                    preview.innerHTML = '';
+                    document.getElementById('product-image-upload').value = '';
+                    currentImageFile = null;
+                    toggleSaveButton();
+                };
+                container.appendChild(img);
+                container.appendChild(removeBtn);
+                preview.appendChild(container);
+                currentImageFile = file;
             };
             reader.readAsDataURL(file);
-            validateForm();
         }
 
-        // Remove image preview
-        function removeImagePreview() {
-            const preview = document.getElementById('product-image-preview');
-            const input = document.getElementById('product-image-upload');
+        // Vista previa de PDF
+        function previewPDF(file) {
+            const preview = document.getElementById('product-pdf-preview');
             preview.innerHTML = '';
-            input.value = '';
-            validateForm();
+            const container = document.createElement('div');
+            container.className = 'preview-container';
+            const span = document.createElement('span');
+            span.textContent = file.name;
+            span.style.fontSize = '0.9rem';
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-file';
+            removeBtn.innerHTML = '&times;';
+            removeBtn.onclick = () => {
+                preview.innerHTML = '';
+                document.getElementById('product-pdf-upload').value = '';
+                currentPDFFile = null;
+            };
+            container.appendChild(span);
+            container.appendChild(removeBtn);
+            preview.appendChild(container);
+            currentPDFFile = file;
         }
 
-        // Validar formulario en tiempo real
-        function validateForm() {
-            const name = document.getElementById('product-name').value;
-            const pdf = document.getElementById('product-pdf').value;
-            const image = document.getElementById('product-image-upload').files.length;
+        // Vista previa de imagen de asesor
+        function previewAdvisorImage(file) {
+            const preview = document.getElementById('advisor-image-preview');
+            preview.innerHTML = '';
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.maxWidth = '100px';
+                img.style.maxHeight = '100px';
+                img.style.borderRadius = '8px';
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Habilitar/deshabilitar botón de guardar producto
+        function toggleSaveButton() {
+            const name = document.getElementById('product-name').value.trim();
+            const imageInput = document.getElementById('product-image-upload');
             const saveBtn = document.getElementById('save-product-btn');
-
-            // Validar nombre
-            const nameValid = name && name.length <= 100;
-            document.getElementById('product-name').classList.toggle('is-invalid', !nameValid);
-
-            // Validar PDF
-            const pdfValid = !pdf || /^(https?:\/\/)/i.test(pdf);
-            document.getElementById('product-pdf').classList.toggle('is-invalid', !pdfValid);
-
-            // Habilitar botón si nombre e imagen son válidos
-            saveBtn.disabled = !nameValid || !image;
+            const isEditing = !!document.getElementById('product-id').value;
+            const hasImage = imageInput.files.length > 0 || existingImagePath;
+            saveBtn.disabled = !(name && (hasImage || isEditing));
         }
 
-        // Añadir especificación
-        function addSpecification() {
-            const label = document.getElementById('spec-label').value.trim();
-            const value = document.getElementById('spec-value').value.trim();
-            if (!label || !value) {
-                Swal.fire('Error', 'Por favor, complete ambos campos de especificación.', 'error');
-                return;
-            }
-            const list = document.getElementById('specifications-list');
-            const specId = `spec-${Date.now()}`;
-            const specItem = document.createElement('div');
-            specItem.className = 'spec-item';
-            specItem.innerHTML = `
-                <span>${label}: ${value}</span>
-                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
-            `;
-            specItem.dataset.label = label;
-            specItem.dataset.value = value;
-            list.appendChild(specItem);
-            document.getElementById('spec-label').value = '';
-            document.getElementById('spec-value').value = '';
-        }
-
-        // Añadir característica
-        function addFeature() {
-            const feature = document.getElementById('feature-input').value.trim();
-            if (!feature) {
-                Swal.fire('Error', 'Por favor, ingrese una característica.', 'error');
-                return;
-            }
-            const list = document.getElementById('features-list');
-            const featureId = `feature-${Date.now()}`;
-            const featureItem = document.createElement('div');
-            featureItem.className = 'feature-item';
-            featureItem.innerHTML = `
-                <span>${feature}</span>
-                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
-            `;
-            featureItem.dataset.feature = feature;
-            list.appendChild(featureItem);
-            document.getElementById('feature-input').value = '';
-        }
-
-        // Logout
-        async function logout() {
-            try {
-                await supabase.auth.signOut();
-                window.location.href = 'index.html';
-            } catch (err) {
-                console.error('Error al cerrar sesión:', err);
-                Swal.fire('Error', 'No se pudo cerrar sesión', 'error');
-            }
-        }
-
-        // Advisors CRUD
+        // Cargar asesores
         async function loadAdvisors() {
             const { data, error } = await supabase
                 .from('advisors')
@@ -1139,6 +1194,62 @@
             });
         }
 
+        // Cargar productos
+        async function loadProducts() {
+            const { data, error } = await supabase
+                .from('machine_products')
+                .select('id, name, description, image_url, pdf_url, specifications, features, dimensions, deleted, created_at')
+                .eq('deleted', false)
+                .order('id', { ascending: false });
+            if (error) {
+                console.error('Error al cargar productos:', error);
+                Swal.fire('Error', 'No se pudo cargar productos', 'error');
+                return;
+            }
+            const table = document.getElementById('gallery-table');
+            table.innerHTML = '';
+            data.forEach(product => {
+                let specs = Array.isArray(product.specifications) ? product.specifications : [];
+                if (typeof product.specifications === 'string') {
+                    try { specs = JSON.parse(product.specifications); } catch (e) { console.error('Error parsing specifications:', e); specs = []; }
+                }
+                let features = Array.isArray(product.features) ? product.features : [];
+                if (typeof product.features === 'string') {
+                    try { features = JSON.parse(product.features); } catch (e) { console.error('Error parsing features:', e); features = []; }
+                }
+                let dims = typeof product.dimensions === 'object' && product.dimensions !== null ? product.dimensions : { width: 0, height: 0, depth: 0, weight: 0 };
+                if (typeof product.dimensions === 'string') {
+                    try { dims = JSON.parse(product.dimensions); } catch (e) { console.error('Error parsing dimensions:', e); dims = { width: 0, height: 0, depth: 0, weight: 0 }; }
+                }
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="white-space: nowrap;">${product.name || '-'}</td>
+                    <td><span>${product.description || '-'}</span></td>
+                    <td><span>${specs.length 
+                        ? specs.map(s => `<span class="badge bg-info me-1">${s.label}: ${s.value}</span>`).join('') 
+                        : '<span class="text-muted">-</span>'}</span></td>
+                    <td><span>${features.length 
+                        ? features.map(f => `<span class="badge bg-success me-1">${f}</span>`).join('') 
+                        : '<span class="text-muted">-</span>'}</span></td>
+                    <td><span>${Object.keys(dims).length 
+                        ? `W: ${dims.width || 0}cm, H: ${dims.height || 0}cm, D: ${dims.depth || 0}cm, W: ${dims.weight || 0}kg`
+                        : '<span class="text-muted">-</span>'}</span></td>
+                    <td>
+                        <img src="${product.image_url || 'https://via.placeholder.com/40'}" alt="img" style="width:40px;height:40px;object-fit:cover;border-radius:10px;">
+                    </td>
+                    <td>
+                        ${product.pdf_url ? `<a href="${product.pdf_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-file-pdf"></i> PDF</a>` : '<span class="text-muted">-</span>'}
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-info me-2" onclick="editProduct(${product.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteProduct(${product.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        }
+
+        // Abrir modal de asesor
         function openAdvisorModal(action, id = null) {
             const modal = new bootstrap.Modal(document.getElementById('advisorModal'));
             document.getElementById('advisor-id').value = id || '';
@@ -1179,6 +1290,169 @@
             modal.show();
         }
 
+        // Abrir modal de galería
+        function openGalleryModal(action, id = null) {
+            const modal = new bootstrap.Modal(document.getElementById('galleryModal'));
+            document.getElementById('product-id').value = id || '';
+            document.getElementById('product-name').value = '';
+            document.getElementById('product-description').value = '';
+            document.getElementById('spec-label').value = '';
+            document.getElementById('spec-value').value = '';
+            document.getElementById('feature-input').value = '';
+            document.getElementById('dimension-width').value = '';
+            document.getElementById('dimension-height').value = '';
+            document.getElementById('dimension-depth').value = '';
+            document.getElementById('dimension-weight').value = '';
+            document.getElementById('product-pdf-upload').value = '';
+            document.getElementById('product-image-preview').innerHTML = '';
+            document.getElementById('product-image-upload').value = '';
+            document.getElementById('product-pdf-preview').innerHTML = '';
+            document.getElementById('specifications-list').innerHTML = '';
+            document.getElementById('features-list').innerHTML = '';
+            document.getElementById('save-product-btn').disabled = true;
+            currentImageFile = null;
+            currentPDFFile = null;
+            existingImagePath = null;
+            existingPDFPath = null;
+            document.getElementById('galleryModalLabel').textContent = id ? 'Editar Producto' : 'Agregar Producto';
+            if (id) {
+                supabase.from('machine_products').select('id, name, description, image_url, pdf_url, specifications, features, dimensions, deleted').eq('id', id).eq('deleted', false).single().then(({ data, error }) => {
+                    if (error) {
+                        console.error('Error fetching product:', error);
+                    } else if (data) {
+                        document.getElementById('product-name').value = data.name || '';
+                        document.getElementById('product-description').value = data.description || '';
+                        if (data.image_url) {
+                            document.getElementById('product-image-preview').innerHTML = `
+                                <div class="preview-container">
+                                    <img src="${data.image_url}" alt="Preview" class="preview">
+                                    <button type="button" class="remove-file" onclick="clearImagePreview()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            `;
+                            existingImagePath = data.image_url;
+                        }
+                        if (data.pdf_url) {
+                            document.getElementById('product-pdf-preview').innerHTML = `
+                                <div class="preview-container">
+                                    <span>${data.pdf_url.split('/').pop()}</span>
+                                    <button type="button" class="remove-file" onclick="clearPDFPreview()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            `;
+                            existingPDFPath = data.pdf_url;
+                        }
+                        let specs = Array.isArray(data.specifications) ? data.specifications : [];
+                        if (typeof data.specifications === 'string') {
+                            try { specs = JSON.parse(data.specifications); } catch (e) { console.error('Error parsing specifications:', e); specs = []; }
+                        }
+                        specs.forEach(spec => {
+                            const list = document.getElementById('specifications-list');
+                            const specId = `spec-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                            const specItem = document.createElement('div');
+                            specItem.className = 'spec-item';
+                            specItem.innerHTML = `
+                                <span>${spec.label}: ${spec.value}</span>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+                            `;
+                            specItem.dataset.label = spec.label;
+                            specItem.dataset.value = spec.value;
+                            list.appendChild(specItem);
+                        });
+                        let features = Array.isArray(data.features) ? data.features : [];
+                        if (typeof data.features === 'string') {
+                            try { features = JSON.parse(data.features); } catch (e) { console.error('Error parsing features:', e); features = []; }
+                        }
+                        features.forEach(feature => {
+                            const list = document.getElementById('features-list');
+                            const featureId = `feature-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                            const featureItem = document.createElement('div');
+                            featureItem.className = 'feature-item';
+                            featureItem.innerHTML = `
+                                <span>${feature}</span>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+                            `;
+                            featureItem.dataset.feature = feature;
+                            list.appendChild(featureItem);
+                        });
+                        let dims = typeof data.dimensions === 'object' && data.dimensions !== null ? data.dimensions : { width: 0, height: 0, depth: 0, weight: 0 };
+                        if (typeof data.dimensions === 'string') {
+                            try { dims = JSON.parse(data.dimensions); } catch (e) { console.error('Error parsing dimensions:', e); dims = { width: 0, height: 0, depth: 0, weight: 0 }; }
+                        }
+                        document.getElementById('dimension-width').value = dims.width || '';
+                        document.getElementById('dimension-height').value = dims.height || '';
+                        document.getElementById('dimension-depth').value = dims.depth || '';
+                        document.getElementById('dimension-weight').value = dims.weight || '';
+                        toggleSaveButton();
+                    }
+                });
+            }
+            modal.show();
+        }
+
+        // Limpiar vista previa de imagen
+        function clearImagePreview() {
+            document.getElementById('product-image-preview').innerHTML = '';
+            document.getElementById('product-image-upload').value = '';
+            currentImageFile = null;
+            existingImagePath = null;
+            toggleSaveButton();
+        }
+
+        // Limpiar vista previa de PDF
+        function clearPDFPreview() {
+            document.getElementById('product-pdf-preview').innerHTML = '';
+            document.getElementById('product-pdf-upload').value = '';
+            currentPDFFile = null;
+            existingPDFPath = null;
+        }
+
+        // Añadir especificación
+        function addSpecification() {
+            const label = document.getElementById('spec-label').value.trim();
+            const value = document.getElementById('spec-value').value.trim();
+            if (!label || !value) {
+                Swal.fire('Error', 'Por favor, complete ambos campos de especificación.', 'error');
+                return;
+            }
+            const list = document.getElementById('specifications-list');
+            const specId = `spec-${Date.now()}`;
+            const specItem = document.createElement('div');
+            specItem.className = 'spec-item';
+            specItem.innerHTML = `
+                <span>${label}: ${value}</span>
+                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+            `;
+            specItem.dataset.label = label;
+            specItem.dataset.value = value;
+            list.appendChild(specItem);
+            document.getElementById('spec-label').value = '';
+            document.getElementById('spec-value').value = '';
+        }
+
+        // Añadir característica
+        function addFeature() {
+            const feature = document.getElementById('feature-input').value.trim();
+            if (!feature) {
+                Swal.fire('Error', 'Por favor, ingrese una característica.', 'error');
+                return;
+            }
+            const list = document.getElementById('features-list');
+            const featureId = `feature-${Date.now()}`;
+            const featureItem = document.createElement('div');
+            featureItem.className = 'feature-item';
+            featureItem.innerHTML = `
+                <span>${feature}</span>
+                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+            `;
+            featureItem.dataset.feature = feature;
+            list.appendChild(featureItem);
+            document.getElementById('feature-input').value = '';
+        }
+
+        // Guardar asesor
         async function saveAdvisor() {
             const id = document.getElementById('advisor-id').value;
             const name = document.getElementById('advisor-name').value;
@@ -1244,183 +1518,11 @@
             }
         }
 
-        async function editAdvisor(id) {
-            openAdvisorModal('edit', id);
-        }
-
-        async function deleteAdvisor(id) {
-            Swal.fire({
-                title: '¿Eliminar asesor?',
-                text: 'Esta acción no se puede deshacer.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    const { error } = await supabase
-                        .from('advisors')
-                        .update({ deleted: true })
-                        .eq('id', id);
-                    if (error) {
-                        console.error('Error deleting advisor:', error);
-                        Swal.fire('Error', 'No se pudo eliminar el asesor', 'error');
-                    } else {
-                        Swal.fire('Eliminado', 'El asesor ha sido eliminado', 'success');
-                        await loadAdvisors();
-                    }
-                }
-            });
-        }
-
-        // Gallery CRUD (machine_products)
-        async function loadProducts() {
-            const { data, error } = await supabase
-                .from('machine_products')
-                .select('id, name, description, image_url, pdf_url, specifications, features, dimensions, deleted, created_at')
-                .eq('deleted', false)
-                .order('id', { ascending: false });
-            if (error) {
-                console.error('Error al cargar productos:', error);
-                Swal.fire('Error', 'No se pudo cargar productos', 'error');
-                return;
-            }
-            const table = document.getElementById('gallery-table');
-            table.innerHTML = '';
-            data.forEach(product => {
-                let specs = Array.isArray(product.specifications) ? product.specifications : [];
-                if (typeof product.specifications === 'string') {
-                    try { specs = JSON.parse(product.specifications); } catch (e) { console.error('Error parsing specifications:', e); specs = []; }
-                }
-                let features = Array.isArray(product.features) ? product.features : [];
-                if (typeof product.features === 'string') {
-                    try { features = JSON.parse(product.features); } catch (e) { console.error('Error parsing features:', e); features = []; }
-                }
-                let dims = typeof product.dimensions === 'object' && product.dimensions !== null ? product.dimensions : { width: 0, height: 0, depth: 0, weight: 0 };
-                if (typeof product.dimensions === 'string') {
-                    try { dims = JSON.parse(product.dimensions); } catch (e) { console.error('Error parsing dimensions:', e); dims = { width: 0, height: 0, depth: 0, weight: 0 }; }
-                }
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td style="white-space: nowrap;">${product.name || '-'}</td>
-                    <td><span>${product.description || '-'}</span></td>
-                    <td><span>${specs.length 
-                        ? specs.map(s => `<span class="badge bg-info me-1">${s.label}: ${s.value}</span>`).join('') 
-                        : '<span class="text-muted">-</span>'}</span></td>
-                    <td><span>${features.length 
-                        ? features.map(f => `<span class="badge bg-success me-1">${f}</span>`).join('') 
-                        : '<span class="text-muted">-</span>'}</span></td>
-                    <td><span>${Object.keys(dims).length 
-                        ? `W: ${dims.width || 0}cm, H: ${dims.height || 0}cm, D: ${dims.depth || 0}cm, W: ${dims.weight || 0}kg`
-                        : '<span class="text-muted">-</span>'}</span></td>
-                    <td>
-                        <img src="${product.image_url || 'https://via.placeholder.com/40'}" alt="img" style="width:40px;height:40px;object-fit:cover;border-radius:10px;">
-                    </td>
-                    <td>
-                        ${product.pdf_url ? `<a href="${product.pdf_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fa fa-file-pdf"></i> PDF</a>` : '<span class="text-muted">-</span>'}
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-info me-2" onclick="editProduct(${product.id})"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteProduct(${product.id})"><i class="fas fa-trash"></i></button>
-                    </td>
-                `;
-                table.appendChild(row);
-            });
-        }
-
-        function openGalleryModal(action, id = null) {
-            const modal = new bootstrap.Modal(document.getElementById('galleryModal'));
-            document.getElementById('product-id').value = id || '';
-            document.getElementById('product-name').value = '';
-            document.getElementById('product-description').value = '';
-            document.getElementById('spec-label').value = '';
-            document.getElementById('spec-value').value = '';
-            document.getElementById('feature-input').value = '';
-            document.getElementById('dimension-width').value = '';
-            document.getElementById('dimension-height').value = '';
-            document.getElementById('dimension-depth').value = '';
-            document.getElementById('dimension-weight').value = '';
-            document.getElementById('product-pdf').value = '';
-            document.getElementById('product-image-preview').innerHTML = '';
-            document.getElementById('product-image-upload').value = '';
-            document.getElementById('specifications-list').innerHTML = '';
-            document.getElementById('features-list').innerHTML = '';
-            document.getElementById('save-product-btn').disabled = true;
-            document.getElementById('galleryModalLabel').textContent = id ? 'Editar Producto' : 'Agregar Producto';
-            if (id) {
-                supabase.from('machine_products').select('id, name, description, image_url, pdf_url, specifications, features, dimensions, deleted').eq('id', id).eq('deleted', false).single().then(({ data, error }) => {
-                    if (error) {
-                        console.error('Error fetching product:', error);
-                    } else if (data) {
-                        document.getElementById('product-name').value = data.name || '';
-                        document.getElementById('product-description').value = data.description || '';
-                        document.getElementById('product-pdf').value = data.pdf_url || '';
-                        if (data.image_url) {
-                            document.getElementById('product-image-preview').innerHTML = `
-                                <div class="preview-container">
-                                    <img src="${data.image_url}" alt="Preview" class="preview">
-                                    <button type="button" class="remove-image" onclick="removeImagePreview()">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            `;
-                            document.getElementById('save-product-btn').disabled = !data.name;
-                        }
-                        // Cargar especificaciones
-                        let specs = Array.isArray(data.specifications) ? data.specifications : [];
-                        if (typeof data.specifications === 'string') {
-                            try { specs = JSON.parse(data.specifications); } catch (e) { console.error('Error parsing specifications:', e); specs = []; }
-                        }
-                        specs.forEach(spec => {
-                            const list = document.getElementById('specifications-list');
-                            const specId = `spec-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                            const specItem = document.createElement('div');
-                            specItem.className = 'spec-item';
-                            specItem.innerHTML = `
-                                <span>${spec.label}: ${spec.value}</span>
-                                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
-                            `;
-                            specItem.dataset.label = spec.label;
-                            specItem.dataset.value = spec.value;
-                            list.appendChild(specItem);
-                        });
-                        // Cargar características
-                        let features = Array.isArray(data.features) ? data.features : [];
-                        if (typeof data.features === 'string') {
-                            try { features = JSON.parse(data.features); } catch (e) { console.error('Error parsing features:', e); features = []; }
-                        }
-                        features.forEach(feature => {
-                            const list = document.getElementById('features-list');
-                            const featureId = `feature-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                            const featureItem = document.createElement('div');
-                            featureItem.className = 'feature-item';
-                            featureItem.innerHTML = `
-                                <span>${feature}</span>
-                                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
-                            `;
-                            featureItem.dataset.feature = feature;
-                            list.appendChild(featureItem);
-                        });
-                        // Cargar dimensiones
-                        let dims = typeof data.dimensions === 'object' && data.dimensions !== null ? data.dimensions : { width: 0, height: 0, depth: 0, weight: 0 };
-                        if (typeof data.dimensions === 'string') {
-                            try { dims = JSON.parse(data.dimensions); } catch (e) { console.error('Error parsing dimensions:', e); dims = { width: 0, height: 0, depth: 0, weight: 0 }; }
-                        }
-                        document.getElementById('dimension-width').value = dims.width || '';
-                        document.getElementById('dimension-height').value = dims.height || '';
-                        document.getElementById('dimension-depth').value = dims.depth || '';
-                        document.getElementById('dimension-weight').value = dims.weight || '';
-                    }
-                });
-            }
-            modal.show();
-        }
-
+        // Guardar producto
         async function saveProduct() {
             const id = document.getElementById('product-id').value;
             const name = document.getElementById('product-name').value;
             const description = document.getElementById('product-description').value;
-            const pdf_url = document.getElementById('product-pdf').value;
             const specifications = Array.from(document.querySelectorAll('#specifications-list .spec-item')).map(item => ({
                 label: item.dataset.label,
                 value: item.dataset.value
@@ -1439,26 +1541,21 @@
                 Swal.fire('Error', 'El nombre del producto es requerido.', 'error');
                 return;
             }
-            if (!document.getElementById('product-image-upload').files.length && !id) {
+            if (!currentImageFile && !existingImagePath && !id) {
                 Swal.fire('Error', 'La imagen del producto es requerida.', 'error');
                 return;
             }
-            if (pdf_url && !/^(https?:\/\/)/i.test(pdf_url)) {
-                document.getElementById('product-pdf').classList.add('is-invalid');
-                Swal.fire('Error', 'Por favor, ingrese una URL válida para el PDF.', 'error');
-                return;
-            }
 
-            let image_url = '';
-            if (document.getElementById('product-image-upload').files.length > 0) {
-                const file = document.getElementById('product-image-upload').files[0];
+            let image_url = existingImagePath || '';
+            if (currentImageFile) {
+                const file = currentImageFile;
                 const fileName = `products/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-                document.querySelector('.upload-progress').style.display = 'block';
+                document.querySelector('#product-image-dropzone .upload-progress').style.display = 'block';
                 document.getElementById('upload-progress-text').textContent = 'Subiendo imagen...';
                 const { error: uploadError } = await supabase.storage
                     .from('images')
                     .upload(fileName, file, { upsert: true });
-                document.querySelector('.upload-progress').style.display = 'none';
+                document.querySelector('#product-image-dropzone .upload-progress').style.display = 'none';
                 if (uploadError) {
                     console.error('Error uploading image:', uploadError);
                     Swal.fire('Error', 'No se pudo subir la imagen', 'error');
@@ -1468,18 +1565,34 @@
                     .from('images')
                     .getPublicUrl(fileName);
                 image_url = publicUrlData.publicUrl;
-            } else if (id) {
-                const { data: existingData } = await supabase.from('machine_products').select('image_url').eq('id', id).single();
-                image_url = existingData?.image_url || '';
-            } else {
-                image_url = 'https://via.placeholder.com/40';
+            }
+
+            let pdf_url = existingPDFPath || '';
+            if (currentPDFFile) {
+                const file = currentPDFFile;
+                const fileName = `products/pdf_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                document.querySelector('#product-pdf-dropzone .upload-progress').style.display = 'block';
+                document.getElementById('upload-progress-text').textContent = 'Subiendo PDF...';
+                const { error: uploadError } = await supabase.storage
+                    .from('pdfs')
+                    .upload(fileName, file, { upsert: true });
+                document.querySelector('#product-pdf-dropzone .upload-progress').style.display = 'none';
+                if (uploadError) {
+                    console.error('Error uploading PDF:', uploadError);
+                    Swal.fire('Error', 'No se pudo subir el PDF', 'error');
+                    return;
+                }
+                const { data: publicUrlData } = supabase.storage
+                    .from('pdfs')
+                    .getPublicUrl(fileName);
+                pdf_url = publicUrlData.publicUrl;
             }
 
             const product = {
                 name,
                 description,
                 image_url,
-                pdf_url,
+                pdf_url: pdf_url || null,
                 specifications: JSON.stringify(specifications),
                 features: JSON.stringify(features),
                 dimensions: JSON.stringify(dimensions),
@@ -1512,10 +1625,43 @@
             }
         }
 
+        // Editar asesor
+        async function editAdvisor(id) {
+            openAdvisorModal('edit', id);
+        }
+
+        // Eliminar asesor
+        async function deleteAdvisor(id) {
+            Swal.fire({
+                title: '¿Eliminar asesor?',
+                text: 'Esta acción no se puede deshacer.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const { error } = await supabase
+                        .from('advisors')
+                        .update({ deleted: true })
+                        .eq('id', id);
+                    if (error) {
+                        console.error('Error deleting advisor:', error);
+                        Swal.fire('Error', 'No se pudo eliminar el asesor', 'error');
+                    } else {
+                        Swal.fire('Eliminado', 'El asesor ha sido eliminado', 'success');
+                        await loadAdvisors();
+                    }
+                }
+            });
+        }
+
+        // Editar producto
         async function editProduct(id) {
             openGalleryModal('edit', id);
         }
 
+        // Eliminar producto
         async function deleteProduct(id) {
             Swal.fire({
                 title: '¿Eliminar producto?',
@@ -1539,6 +1685,17 @@
                     }
                 }
             });
+        }
+
+        // Cerrar sesión
+        async function logout() {
+            try {
+                await supabase.auth.signOut();
+                window.location.href = 'index.html';
+            } catch (err) {
+                console.error('Error al cerrar sesión:', err);
+                Swal.fire('Error', 'No se pudo cerrar sesión', 'error');
+            }
         }
     </script>
 </body>
